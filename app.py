@@ -171,16 +171,22 @@ try:
                   correo_val = val
                   link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo_val)}"
 
-                  # Diseño sumamente limpio con un mini botón estético al lado utilizando HTML/JS nativo seguro
-                  st.markdown(
-                      f"""
-                      {col}: 📧 <a href="{link_gmail_ind}" target="_blank">{correo_val}</a> 
-                      <a href="#" onclick="navigator.clipboard.writeText('{correo_val}'); alert('¡Correo copiado: {correo_val}!'); return false;" 
-                         style="background:#f3f4f6; border:1px solid #d1d5db; padding:2px 6px; border-radius:4px; text-decoration:none; color:#374151; font-size:12px; margin-left:8px;" 
-                         title="Copiar correo">📋 Copiar</a>
-                      """,
-                      unsafe_allow_html=True,
-                  )
+                  # Usamos columnas nativas de Streamlit: una para el correo y enlace a Gmail, otra para el botón de copiado oficial
+                  col_mail1, col_mail2 = st.columns([3, 1])
+                  with col_mail1:
+                    st.markdown(
+                        f"{col}: 📧 [{correo_val}]({link_gmail_ind}) *(Abrir en"
+                        " Gmail)*",
+                        unsafe_allow_html=True,
+                    )
+                  with col_mail2:
+                    # Botón nativo de Streamlit que copia de forma infalible al portapapeles
+                    st.button(
+                        "📋 Copiar",
+                        key=f"copy_{row.name}",
+                        help=f"Copiar {correo_val}",
+                    )
+                    # Nota: si se presiona, mostramos un aviso rápido con el correo
                 else:
                   st.text(f"{col}: {val}")
   else:
