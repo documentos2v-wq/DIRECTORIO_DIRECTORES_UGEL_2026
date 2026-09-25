@@ -209,17 +209,21 @@ try:
               if val != "" and val != "nan":
                 if "CORREO" in col_upper:
                   correo_val = val
-                  # Creamos una fila dividida en columnas: una para el texto del correo y otra con el botón de copiado rápido
-                  col_c1, col_c2 = st.columns([3, 1])
-                  with col_c1:
+                  # Creamos dos columnas compactas: una para el correo con enlace a Gmail y otra con un botón nativo de Streamlit para copiar
+                  col_a, col_b = st.columns([3, 1])
+                  with col_a:
                     link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo_val)}"
                     st.markdown(
                         f"{col}: 📧 [{correo_val}]({link_gmail_ind})",
                         unsafe_allow_html=True,
                     )
-                  with col_c2:
-                    # Usamos st.code integrado que trae su propio botón de copiado al portapapeles
-                    st.code(correo_val, language=None)
+                  with col_b:
+                    if st.button("📋 Copiar", key=f"btn_copy_{row.name}"):
+                      st.write(
+                          f'<script>navigator.clipboard.writeText("{correo_val}");</script>',
+                          unsafe_allow_html=True,
+                      )
+                      st.toast(f"¡Copiado: {correo_val}!", icon="✅")
                 else:
                   st.text(f"{col}: {val}")
   else:
