@@ -20,7 +20,7 @@ st.markdown(
 )
 
 
-# Función para cargar y unificar todas las hojas del Excel
+# Función para cargar y unificar todas las hojas del Excel limpiando los .0
 @st.cache_data
 def cargar_datos():
   archivo_excel = "BD - Directores.xlsx"
@@ -30,6 +30,20 @@ def cargar_datos():
   for sheet in xls.sheet_names:
     temp_df = pd.read_excel(xls, sheet_name=sheet)
     temp_df.columns = temp_df.columns.str.strip()
+
+    # Limpiar valores decimales ".0" en columnas de texto/números
+    for col in temp_df.columns:
+      # Si la columna tiene floats que terminan en .0 o son numéricos con decimales nulos
+      temp_df[col] = temp_df[col].apply(
+          lambda x: (
+              str(int(x))
+              if pd.notna(x)
+              and isinstance(x, float)
+              and x.is_integer()
+              else x
+          )
+      )
+
     temp_df["CATEGORIA_HOJA"] = sheet
     dfs.append(temp_df)
 
@@ -86,11 +100,10 @@ try:
   )
   st.divider()
 
-  # Contenedor con barra de desplazamiento (Scroll) vertical de altura fija
+  # Contenedor con barra de desplazamiento vertical de altura fija
   if total_resultados > 0:
     columnas = [c for c in df_filtrado.columns if c != "CATEGORIA_HOJA"]
 
-    # Creamos una ventana deslizable de 480 píxeles de alto
     with st.container(height=480):
       for index, row in df_filtrado.iterrows():
         titulo = str(
@@ -115,7 +128,11 @@ try:
           for col in columnas:
             val = row[col]
             if pd.notna(val) and str(val).strip() != "" and str(val) != "nan":
-              st.text(f"{col}: {val}")
+              # Si la columna es CELULAR, le agregamos el icono de teléfono 📞
+              if "CELULAR" in col.upper():
+                st.text(f"{col}: 📞 {val}")
+              else:
+                st.text(f"{col}: {val}")
   else:
     st.warning(
         "No se encontraron coincidencias. Prueba buscando por una sola palabra"
