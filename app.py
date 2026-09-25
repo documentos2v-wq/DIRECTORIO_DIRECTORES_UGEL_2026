@@ -124,10 +124,22 @@ try:
           for col in columnas:
             val = limpiar_texto(row[col])
             if val != "" and val != "nan":
-              # Asignar emojis personalizados según la columna
               col_upper = col.upper()
+
+              # Si es celular, creamos un enlace interactivo de WhatsApp
               if "CELULAR" in col_upper:
-                st.text(f"{col}: 📞 {val}")
+                # Limpiar el número para dejar solo dígitos (asumiendo código de Perú +51 si no lo tiene)
+                num_limpio = "".join(filter(str.isdigit, val))
+                if len(num_limpio) == 9:  # Formato celular Perú estándar
+                  num_whatsapp = f"51{num_limpio}"
+                else:
+                  num_whatsapp = num_limpio
+
+                link_wa = f"https://wa.me/{num_whatsapp}"
+                st.markdown(
+                    f"{col}: 📞 [{val}]({link_wa}) 🟢 *(Clic para WhatsApp)*",
+                    unsafe_allow_html=True,
+                )
               elif "IE" == col_upper:
                 st.text(f"{col}: 🏫 {val}")
               elif "CORREO" in col_upper:
