@@ -73,6 +73,7 @@ try:
   if busqueda:
     palabras = busqueda.strip().split()
 
+    # Crear una versión de texto plano normalizada de todo el DataFrame
     df_texto = (
         df.fillna("")
         .astype(str)
@@ -92,6 +93,8 @@ try:
           .strip()
       )
       if p_limpia:
+        # Si la palabra es un número con ceros a la izquierda (ej: 0267385),
+        # también buscamos su versión sin ceros (ej: 267385) para asegurar que lo encuentre.
         p_alternativa = p_limpia.lstrip("0") if p_limpia.isdigit() else p_limpia
 
         mask = mask | df_texto.str.contains(p_limpia, na=False)
@@ -118,6 +121,7 @@ try:
 
     with st.container(height=480):
       for index, row in df_filtrado.iterrows():
+        # Extraer campos clave de forma inteligente usando palabras clave
         nombre_dir = obtener_campo(row, ["DIRECTOR", "NOMBRES Y APELLIDOS"])
         nombre_ie = obtener_campo(row, ["IE", "INSTITUCION"])
         celular = obtener_campo(row, ["CELULAR", "TELEFONO", "MOVIL"])
@@ -128,13 +132,18 @@ try:
         if not nombre_ie:
           nombre_ie = "IE sin nombre"
 
-        # Título limpio y ordenado de la tarjeta
-        titulo_tarjeta = f"🏫 {nombre_ie} — 👤 {nombre_dir}"
+        # Título principal de la tarjeta incluyendo IE, Director y Celular a la vista
+        if celular:
+          titulo_tarjeta = (
+              f"🏫 {nombre_ie} — 👤 {nombre_dir} — 📞 {celular}"
+          )
+        else:
+          titulo_tarjeta = f"🏫 {nombre_ie} — 👤 {nombre_dir} — 📞 (Sin celular)"
 
         with st.expander(titulo_tarjeta):
           st.caption(f"📁 Sección: {row.get('CATEGORIA_HOJA', '')}")
 
-          # Datos principales destacados al abrir la tarjeta con enlace directo a WhatsApp
+          # Mostrar datos detallados dentro de la tarjeta
           st.markdown(f"**IE:** 🏫 {nombre_ie}")
           st.markdown(f"**Nombre Director:** 👤 {nombre_dir}")
 
@@ -144,10 +153,9 @@ try:
                 f"51{num_limpio}" if len(num_limpio) == 9 else num_limpio
             )
             link_wa = f"https://wa.me/{num_whatsapp}"
-            # Enlace grande y directo para WhatsApp
             st.markdown(
-                f"### 📞 Celular: [{celular}]({link_wa}) 🟢 *(Clic aquí para"
-                " abrir WhatsApp)*",
+                f"**Celular:** 📞 [{celular}]({link_wa}) 🟢 *(Clic para"
+                " WhatsApp)*",
                 unsafe_allow_html=True,
             )
           else:
