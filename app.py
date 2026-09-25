@@ -124,9 +124,16 @@ try:
           for col in columnas:
             val = limpiar_texto(row[col])
             if val != "" and val != "nan":
-              # Si la columna es CELULAR, le agregamos el icono de teléfono 📞
-              if "CELULAR" in col.upper():
+              # Asignar emojis personalizados según la columna
+              col_upper = col.upper()
+              if "CELULAR" in col_upper:
                 st.text(f"{col}: 📞 {val}")
+              elif "IE" == col_upper:
+                st.text(f"{col}: 🏫 {val}")
+              elif "CORREO" in col_upper:
+                st.text(f"{col}: 📧 {val}")
+              elif "DIRECTOR" in col_upper:
+                st.text(f"{col}: 👤 {val}")
               else:
                 st.text(f"{col}: {val}")
   else:
