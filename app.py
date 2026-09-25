@@ -1,3 +1,4 @@
+import urllib.parse
 import pandas as pd
 import streamlit as st
 
@@ -20,14 +21,12 @@ st.markdown(
 )
 
 
-# Función para cargar únicamente la pestaña 'PUBLICAS' y limpiar datos vacíos
+# Función para cargar únicamente la pestaña 'PUBLICAS'
 @st.cache_data
 def cargar_datos():
   archivo_excel = "BD - Directores.xlsx"
   df = pd.read_excel(archivo_excel, sheet_name="PUBLICAS")
   df.columns = df.columns.str.strip()
-
-  # Eliminar filas donde falten datos críticos
   df = df.dropna(subset=["NOMBRE DIRECTOR", "IE"], how="all")
   df["CATEGORIA_HOJA"] = "PUBLICAS"
   return df
@@ -56,6 +55,20 @@ def obtener_campo(row, keywords):
 
 try:
   df = cargar_datos()
+
+  # Sección superior de herramientas de envío masivo de correos
+  with st.expander(
+      "📧 Herramientas de Correo Masivo (Enviar a todos los filtrados)"
+  ):
+    st.markdown(
+        "Puedes redactar un correo institucional y enviarlo a todos los"
+        " directores que arroje tu búsqueda actual."
+    )
+    asunto_correo = st.text_input("Asunto del correo:", value="Comunicado UGEL")
+    cuerpo_correo = st.text_area(
+        "Mensaje del correo:",
+        value="Estimados directores,\n\nPor medio del presente...",
+    )
 
   # Buscador general inteligente y flexible
   st.markdown("### 🔍 Buscador General")
@@ -99,6 +112,24 @@ try:
     df_filtrado = df
 
   total_resultados = len(df_filtrado)
+
+  # Extraer todos los correos válidos de los resultados actuales filtrados
+  correos_filtrados = []
+  for _, row in df_filtrado.iterrows():
+    c = obtener_campo(row, ["CORREO", "EMAIL"])
+    if c and "@" in c:
+      correos_filtrados.append(c)
+
+  # Botón dinámico para enviar correo masivo a los resultados actuales
+  if correos_filtrados:
+    # Usamos Copia Oculta (BCC) separada por comas para proteger la privacidad de los correos
+    lista_bcc = ",".join(correos_filtrados)
+    mailto_link = f"mailto:?bcc={urllib.parse.quote(lista_bcc)}&subject={urllib.parse.quote(asunto_correo)}&body={urllib.parse.quote(cuerpo_correo)}"
+
+    st.markdown(
+        f'<a href="{mailto_link}" target="_blank" style="display: block; text-align: center; background-color: #2563EB; color: white; padding: 10px; border-radius: 5px; text-decoration: none; font-weight: bold; margin-bottom: 10px;">📧 Enviar correo a los {len(correos_filtrados)} directores de esta búsqueda</a>',
+        unsafe_allow_html=True,
+    )
 
   # Contador de resultados
   st.markdown(
@@ -171,7 +202,12 @@ try:
             ):
               if val != "" and val != "nan":
                 if "CORREO" in col_upper:
-                  st.text(f"{col}: 📧 {val}")
+                  correo_val = val
+                  link_mail = f"mailto:{correo_val}"
+                  st.markdown(
+                      f"{col}: 📧 [{correo_val}]({link_mail})",
+                      unsafe_allow_html=True,
+                  )
                 else:
                   st.text(f"{col}: {val}")
   else:
@@ -187,7 +223,7 @@ try:
       label="📥 Descargar resultados en CSV",
       data=csv,
       file_name="directores_filtrados.csv",
-      mime="text/csv",
+      mime="text/css",
       use_container_width=True,
   )
 
