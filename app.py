@@ -20,7 +20,7 @@ st.markdown(
 )
 
 
-# Función para cargar y unificar todas las hojas del Excel limpiando los .0
+# Función para cargar y unificar todas las hojas del Excel
 @st.cache_data
 def cargar_datos():
   archivo_excel = "BD - Directores.xlsx"
@@ -30,25 +30,21 @@ def cargar_datos():
   for sheet in xls.sheet_names:
     temp_df = pd.read_excel(xls, sheet_name=sheet)
     temp_df.columns = temp_df.columns.str.strip()
-
-    # Limpiar valores decimales ".0" en columnas de texto/números
-    for col in temp_df.columns:
-      # Si la columna tiene floats que terminan en .0 o son numéricos con decimales nulos
-      temp_df[col] = temp_df[col].apply(
-          lambda x: (
-              str(int(x))
-              if pd.notna(x)
-              and isinstance(x, float)
-              and x.is_integer()
-              else x
-          )
-      )
-
     temp_df["CATEGORIA_HOJA"] = sheet
     dfs.append(temp_df)
 
   df_total = pd.concat(dfs, ignore_index=True, sort=False)
   return df_total
+
+
+# Función para eliminar el .0 de cualquier número o código
+def limpiar_texto(val):
+  if pd.isna(val):
+    return ""
+  s = str(val).strip()
+  if s.endswith(".0"):
+    s = s[:-2]
+  return s
 
 
 try:
@@ -106,7 +102,7 @@ try:
 
     with st.container(height=480):
       for index, row in df_filtrado.iterrows():
-        titulo = str(
+        titulo = limpiar_texto(
             row.get(
                 "NOMBRE DIRECTOR",
                 row.get(columnas[1], row.get(columnas[0], "Registro")),
@@ -117,7 +113,7 @@ try:
             if "IE" in df_filtrado.columns
             else (columnas[2] if len(columnas) > 2 else "")
         )
-        subtitulo = str(row.get(subt_col, ""))
+        subtitulo = limpiar_texto(row.get(subt_col, ""))
 
         with st.expander(f"📌 {titulo}"):
           if subtitulo and subtitulo != "nan":
@@ -126,8 +122,8 @@ try:
           st.caption(f"📁 Sección: {row.get('CATEGORIA_HOJA', '')}")
 
           for col in columnas:
-            val = row[col]
-            if pd.notna(val) and str(val).strip() != "" and str(val) != "nan":
+            val = limpiar_texto(row[col])
+            if val != "" and val != "nan":
               # Si la columna es CELULAR, le agregamos el icono de teléfono 📞
               if "CELULAR" in col.upper():
                 st.text(f"{col}: 📞 {val}")
