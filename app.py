@@ -56,13 +56,13 @@ def obtener_campo(row, keywords):
 try:
   df = cargar_datos()
 
-  # Sección superior de herramientas de correo masivo vía Gmail
+  # Sección superior de herramientas de correo masivo
   with st.expander(
-      "📧 Herramientas de Correo Masivo (Enviar a todos los filtrados)"
+      "📧 Redactar Correo Masivo (Para directores seleccionados)"
   ):
     st.markdown(
-        "Puedes redactar un correo y abrirlo directamente en **Gmail** con"
-        " todos los directores filtrados."
+        "Redacta tu mensaje. El botón de envío se activará automáticamente con"
+        " los directores que vayas marcando en la lista."
     )
     asunto_correo = st.text_input("Asunto del correo:", value="Comunicado UGEL")
     cuerpo_correo = st.text_area(
@@ -113,33 +113,7 @@ try:
 
   total_resultados = len(df_filtrado)
 
-  # Extraer todos los correos válidos de los resultados actuales filtrados
-  correos_filtrados = []
-  for _, row in df_filtrado.iterrows():
-    c = obtener_campo(row, ["CORREO", "EMAIL"])
-    if c and "@" in c:
-      correos_filtrados.append(c)
-
-  # Botón dinámico para abrir Gmail con validación de límite de 150 correos
-  if correos_filtrados:
-    cantidad_correos = len(correos_filtrados)
-    if cantidad_correos <= 150:
-      lista_bcc = ",".join(correos_filtrados)
-      gmail_link = f"https://mail.google.com/mail/?view=cm&fs=1&bcc={urllib.parse.quote(lista_bcc)}&su={urllib.parse.quote(asunto_correo)}&body={urllib.parse.quote(cuerpo_correo)}"
-
-      st.markdown(
-          f'<a href="{gmail_link}" target="_blank" style="display: block; text-align: center; background-color: #EA4335; color: white; padding: 12px; border-radius: 5px; text-decoration: none; font-weight: bold; margin-bottom: 10px;">✉️ Abrir en Gmail y enviar a los {cantidad_correos} directores</a>',
-          unsafe_allow_html=True,
-      )
-    else:
-      st.warning(
-          f"⚠️ Se encontraron {cantidad_correos} correos en esta búsqueda."
-          " Supera el límite de 150 para envío directo en enlace de Gmail."
-          " Realiza una búsqueda más específica o filtra por menor cantidad"
-          " para usar el acceso directo."
-      )
-
-  # Contador de resultados
+  # Contador de resultados y espacio para selecciones
   st.markdown(
       f"<p style='color: #6B7280; font-size: 14px;'>Se encontraron"
       f" <b>{total_resultados}</b> registros.</p>",
@@ -148,6 +122,8 @@ try:
   st.divider()
 
   # Contenedor con barra de desplazamiento vertical de altura fija
+  correos_seleccionados = []
+
   if total_resultados > 0:
     columnas = [c for c in df_filtrado.columns if c != "CATEGORIA_HOJA"]
 
@@ -157,6 +133,7 @@ try:
         nombre_ie = obtener_campo(row, ["IE", "INSTITUCION"])
         celular = obtener_campo(row, ["CELULAR", "TELEFONO", "MOVIL"])
         cod_modular = obtener_campo(row, ["MODULAR", "CODIGO MODULAR"])
+        correo = obtener_campo(row, ["CORREO", "EMAIL"])
 
         if not nombre_dir:
           nombre_dir = "Sin nombre registrado"
@@ -172,6 +149,17 @@ try:
           titulo_tarjeta = f"🏫 {nombre_ie} — 👤 {nombre_dir} — 📞 (Sin celular)"
 
         with st.expander(titulo_tarjeta):
+          # Casilla de selección para agregar al correo masivo
+          if correo and "@" in correo:
+            marcar = st.checkbox(
+                f"✅ Seleccionar para correo masivo ({correo})",
+                key=f"chk_{index}",
+            )
+            if marcar:
+              correos_seleccionados.append(correo)
+          else:
+            st.caption("⚠️ Este registro no cuenta con correo electrónico válido.")
+
           st.caption(f"📁 Sección: {row.get('CATEGORIA_HOJA', '')}")
 
           st.markdown(f"**IE:** 🏫 {nombre_ie}")
@@ -223,8 +211,33 @@ try:
         " o número."
     )
 
-  # Botón de descarga al final de la página
+  # Panel inferior dinámico para enviar a los seleccionados
   st.divider()
+  if correos_seleccionados:
+    cant_sel = len(correos_seleccionados)
+    st.info(f"📌 Has seleccionado **{cant_sel}** directores para enviar correo.")
+
+    if cant_sel <= 150:
+      lista_bcc = ",".join(correos_seleccionados)
+      gmail_link = f"https://mail.google.com/mail/?view=cm&fs=1&bcc={urllib.parse.quote(lista_bcc)}&su={urllib.parse.quote(asunto_correo)}&body={urllib.parse.quote(cuerpo_correo)}"
+
+      st.markdown(
+          f'<a href="{gmail_link}" target="_blank" style="display: block; text-align: center; background-color: #EA4335; color: white; padding: 12px; border-radius: 5px; text-decoration: none; font-weight: bold; margin-bottom: 10px;">✉️ Abrir en Gmail y enviar a los {cant_sel} seleccionados</a>',
+          unsafe_allow_html=True,
+      )
+    else:
+      st.error(
+          f"⚠️ Has seleccionado {cant_sel} correos. Supera el límite de 150"
+          " para envíos directos en enlace de Gmail. Desmarca algunos para"
+          " quedar por debajo de 150."
+      )
+  else:
+    st.markdown(
+        "*(Marca las casillas dentro de las tarjetas de los directores para"
+        " habilitar el botón de envío masivo)*"
+    )
+
+  # Botón de descarga al final de la página
   csv = df_filtrado.to_csv(index=False).encode("utf-8")
   st.download_button(
       label="📥 Descargar resultados en CSV",
