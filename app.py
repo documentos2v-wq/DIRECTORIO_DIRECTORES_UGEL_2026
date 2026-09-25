@@ -171,10 +171,14 @@ try:
                   correo_val = val
                   link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo_val)}"
 
-                  # Diseño ultra compacto en una sola línea: icono de correo, enlace a Gmail y un mini botón estético al lado
+                  # Diseño sumamente limpio con un mini botón estético al lado utilizando HTML/JS nativo seguro
                   st.markdown(
-                      f"{col}: 📧 [{correo_val}]({link_gmail_ind}) *(Abrir en"
-                      f" Gmail)* &nbsp;|&nbsp; 📋 `{correo_val}`",
+                      f"""
+                      {col}: 📧 <a href="{link_gmail_ind}" target="_blank">{correo_val}</a> 
+                      <a href="#" onclick="navigator.clipboard.writeText('{correo_val}'); alert('¡Correo copiado: {correo_val}!'); return false;" 
+                         style="background:#f3f4f6; border:1px solid #d1d5db; padding:2px 6px; border-radius:4px; text-decoration:none; color:#374151; font-size:12px; margin-left:8px;" 
+                         title="Copiar correo">📋 Copiar</a>
+                      """,
                       unsafe_allow_html=True,
                   )
                 else:
@@ -192,7 +196,7 @@ try:
       label="📥 Descargar resultados en CSV",
       data=csv,
       file_name="directores_filtrados.csv",
-      mime="text/csv",
+      mime="text/css",
       use_container_width=True,
   )
 
