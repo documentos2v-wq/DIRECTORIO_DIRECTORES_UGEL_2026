@@ -20,21 +20,24 @@ st.markdown(
 )
 
 
-# Función para cargar los datos asegurando registros limpios y válidos
+# Función para cargar y unificar todas las hojas del Excel limpiando filas vacías o correlativas
 @st.cache_data
 def cargar_datos():
   archivo_excel = "BD - Directores.xlsx"
   xls = pd.ExcelFile(archivo_excel)
 
-  # Cargamos la pestaña principal 'PUBLICAS' que contiene el directorio completo
-  df = pd.read_excel(xls, sheet_name="PUBLICAS")
-  df.columns = df.columns.str.strip()
-  df["CATEGORIA_HOJA"] = "PUBLICAS"
+  dfs = []
+  for sheet in xls.sheet_names:
+    temp_df = pd.read_excel(xls, sheet_name=sheet)
+    temp_df.columns = temp_df.columns.str.strip()
 
-  # Filtrar para eliminar cualquier fila vacía o corrupta donde no haya nombre de director o IE
-  df = df.dropna(subset=["NOMBRE DIRECTOR", "IE"], how="all")
+    # Omitir filas donde no existan datos reales de director o IE
+    temp_df = temp_df.dropna(how="all")
+    temp_df["CATEGORIA_HOJA"] = sheet
+    dfs.append(temp_df)
 
-  return df
+  df_total = pd.concat(dfs, ignore_index=True, sort=False)
+  return df_total
 
 
 # Función para eliminar el .0 de cualquier número o código
@@ -102,6 +105,14 @@ try:
   else:
     df_filtrado = df
 
+  # Filtrar filas basura (donde el nombre sea un número simple como '5', '6', etc.)
+  if len(df_filtrado) > 0:
+    df_filtrado = df_filtrado[
+        ~df_filtrado.astype(str)
+        .apply(lambda x: x.str.match(r"^\d+$"))
+        .any(axis=1)
+    ]
+
   total_resultados = len(df_filtrado)
 
   # Contador de resultados
@@ -128,13 +139,18 @@ try:
         if not nombre_ie:
           nombre_ie = "IE sin nombre"
 
-        # Título limpio y ordenado de la tarjeta
-        titulo_tarjeta = f"🏫 {nombre_ie} — 👤 {nombre_dir}"
+        # Título principal de la tarjeta mostrando IE, Director y Celular a la vista
+        if celular:
+          titulo_tarjeta = (
+              f"🏫 {nombre_ie} — 👤 {nombre_dir} — 📞 {celular}"
+          )
+        else:
+          titulo_tarjeta = f"🏫 {nombre_ie} — 👤 {nombre_dir} — 📞 (Sin celular)"
 
         with st.expander(titulo_tarjeta):
           st.caption(f"📁 Sección: {row.get('CATEGORIA_HOJA', '')}")
 
-          # Datos principales destacados al abrir la tarjeta con enlace directo a WhatsApp
+          # Datos detallados dentro de la tarjeta
           st.markdown(f"**IE:** 🏫 {nombre_ie}")
           st.markdown(f"**Nombre Director:** 👤 {nombre_dir}")
 
@@ -145,8 +161,8 @@ try:
             )
             link_wa = f"https://wa.me/{num_whatsapp}"
             st.markdown(
-                f"### 📞 Celular: [{celular}]({link_wa}) 🟢 *(Clic aquí para"
-                " abrir WhatsApp)*",
+                f"**Celular:** 📞 [{celular}]({link_wa}) 🟢 *(Clic para"
+                " WhatsApp)*",
                 unsafe_allow_html=True,
             )
           else:
@@ -186,7 +202,7 @@ try:
       label="📥 Descargar resultados en CSV",
       data=csv,
       file_name="directores_filtrados.csv",
-      mime="text/csv",
+      mime="text/css",
       use_container_width=True,
   )
 
