@@ -1,4 +1,3 @@
-import urllib.parse
 import pandas as pd
 import streamlit as st
 
@@ -56,20 +55,6 @@ def obtener_campo(row, keywords):
 try:
   df = cargar_datos()
 
-  # Sección superior de herramientas de correo masivo vía Gmail
-  with st.expander(
-      "📧 Herramientas de Correo Masivo (Enviar a todos los filtrados)"
-  ):
-    st.markdown(
-        "Puedes redactar un correo y abrirlo directamente en **Gmail** con"
-        " todos los directores filtrados."
-    )
-    asunto_correo = st.text_input("Asunto del correo:", value="Comunicado UGEL")
-    cuerpo_correo = st.text_area(
-        "Mensaje del correo:",
-        value="Estimados directores,\n\nPor medio del presente...",
-    )
-
   # Buscador general inteligente y flexible
   st.markdown("### 🔍 Buscador General")
   busqueda = st.text_input(
@@ -120,16 +105,28 @@ try:
     if c and "@" in c:
       correos_filtrados.append(c)
 
-  # Botón dinámico para abrir Gmail con los correos en BCC
+  # Sección de Copia de Correos Masivos (Soluciona el error 400 de longitud de URL)
   if correos_filtrados:
-    lista_bcc = ",".join(correos_filtrados)
-    # Enlace directo a la interfaz web de Gmail con asunto, cuerpo y bcc prellenados
-    gmail_link = f"https://mail.google.com/mail/?view=cm&fs=1&bcc={urllib.parse.quote(lista_bcc)}&su={urllib.parse.quote(asunto_correo)}&body={urllib.parse.quote(cuerpo_correo)}"
-
-    st.markdown(
-        f'<a href="{gmail_link}" target="_blank" style="display: block; text-align: center; background-color: #EA4335; color: white; padding: 12px; border-radius: 5px; text-decoration: none; font-weight: bold; margin-bottom: 10px;">✉️ Abrir en Gmail y enviar a los {len(correos_filtrados)} directores</a>',
-        unsafe_allow_html=True,
-    )
+    with st.expander(
+        f"📧 Copiar lista de correos ({len(correos_filtrados)} directores"
+        " filtrados)"
+    ):
+      st.markdown(
+          "Debido a que Gmail limita la cantidad de caracteres por enlace, el"
+          " método más seguro y rápido es **copiar los correos** y pegarlos en"
+          " Cco (BCC) de tu correo:"
+      )
+      texto_correos = ", ".join(correos_filtrados)
+      st.text_area(
+          "Lista de correos listos para copiar:",
+          value=texto_correos,
+          height=120,
+      )
+      st.info(
+          "💡 Consejo: Haz clic en el recuadro de arriba, presiona **Ctrl + C**"
+          " (o Clic derecho > Copiar) y pégalo en el campo **Cco (BCC)** de tu"
+          " Gmail."
+      )
 
   # Contador de resultados
   st.markdown(
@@ -201,13 +198,7 @@ try:
               if val != "" and val != "nan":
                 if "CORREO" in col_upper:
                   correo_val = val
-                  # Enlace directo para redactar correo individual en Gmail web
-                  link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo_val)}"
-                  st.markdown(
-                      f"{col}: 📧 [{correo_val}]({link_gmail_ind}) *(Abrir en"
-                      " Gmail)*",
-                      unsafe_allow_html=True,
-                  )
+                  st.text(f"{col}: 📧 {correo_val}")
                 else:
                   st.text(f"{col}: {val}")
   else:
