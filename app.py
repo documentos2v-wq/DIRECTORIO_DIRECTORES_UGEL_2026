@@ -65,13 +65,15 @@ try:
   st.markdown("### 🔍 Buscador General")
   busqueda = st.text_input(
       "",
-      placeholder="Ej: Castro, Rodriguez, Juan...",
+      placeholder="Ej: Castro, 267385, Juan, Primaria...",
       label_visibility="collapsed",
   )
 
-  # Filtrado flexible por palabras (Lógica OR)
+  # Filtrado flexible por palabras (Lógica OR robusta frente a ceros iniciales y números)
   if busqueda:
     palabras = busqueda.strip().split()
+
+    # Crear una versión de texto plano normalizada de todo el DataFrame
     df_texto = (
         df.fillna("")
         .astype(str)
@@ -91,7 +93,13 @@ try:
           .strip()
       )
       if p_limpia:
+        # Si la palabra es un número con ceros a la izquierda (ej: 0267385),
+        # también buscamos su versión sin ceros (ej: 267385) para asegurar que lo encuentre.
+        p_alternativa = p_limpia.lstrip("0") if p_limpia.isdigit() else p_limpia
+
         mask = mask | df_texto.str.contains(p_limpia, na=False)
+        if p_alternativa and p_alternativa != p_limpia:
+          mask = mask | df_texto.str.contains(p_alternativa, na=False)
 
     df_filtrado = df[mask]
   else:
@@ -177,7 +185,7 @@ try:
   else:
     st.warning(
         "No se encontraron coincidencias. Prueba buscando por una sola palabra"
-        " (por ejemplo: 'Castro')."
+        " o número."
     )
 
   # Botón de descarga al final de la página
@@ -187,7 +195,7 @@ try:
       label="📥 Descargar resultados en CSV",
       data=csv,
       file_name="directores_filtrados.csv",
-      mime="text/css",
+      mime="text/csv",
       use_container_width=True,
   )
 
