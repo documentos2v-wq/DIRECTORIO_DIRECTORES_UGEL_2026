@@ -1,4 +1,3 @@
-import math
 import pandas as pd
 import streamlit as st
 
@@ -87,54 +86,36 @@ try:
   )
   st.divider()
 
-  # Paginación estética: Máximo 5 registros por vista
+  # Contenedor con barra de desplazamiento (Scroll) vertical de altura fija
   if total_resultados > 0:
-    elementos_por_pagina = 5
-    total_paginas = math.ceil(total_resultados / elementos_por_pagina)
-
-    # Selector de páginas si hay más de 5 resultados
-    if total_paginas > 1:
-      pagina_actual = st.selectbox(
-          "Página de resultados:",
-          range(1, total_paginas + 1),
-          format_func=lambda x: f"Página {x} de {total_paginas}",
-      )
-    else:
-      pagina_actual = 1
-
-    # Calcular el rango de registros a mostrar en esta página
-    inicio = (pagina_actual - 1) * elementos_por_pagina
-    fin = inicio + elementos_por_pagina
-    df_pagina = df_filtrado.iloc[inicio:fin]
-
     columnas = [c for c in df_filtrado.columns if c != "CATEGORIA_HOJA"]
 
-    # Mostrar los registros de la página actual en tarjetas desplegables limpias
-    for index, row in df_pagina.iterrows():
-      titulo = str(
-          row.get(
-              "NOMBRE DIRECTOR",
-              row.get(columnas[1], row.get(columnas[0], "Registro")),
-          )
-      )
-      subt_col = (
-          "IE"
-          if "IE" in df_filtrado.columns
-          else (columnas[2] if len(columnas) > 2 else "")
-      )
-      subtitulo = str(row.get(subt_col, ""))
+    # Creamos una ventana deslizable de 480 píxeles de alto
+    with st.container(height=480):
+      for index, row in df_filtrado.iterrows():
+        titulo = str(
+            row.get(
+                "NOMBRE DIRECTOR",
+                row.get(columnas[1], row.get(columnas[0], "Registro")),
+            )
+        )
+        subt_col = (
+            "IE"
+            if "IE" in df_filtrado.columns
+            else (columnas[2] if len(columnas) > 2 else "")
+        )
+        subtitulo = str(row.get(subt_col, ""))
 
-      with st.expander(f"📌 {titulo}"):
-        if subtitulo and subtitulo != "nan":
-          st.markdown(f"**Institución / Detalle:** {subtitulo}")
+        with st.expander(f"📌 {titulo}"):
+          if subtitulo and subtitulo != "nan":
+            st.markdown(f"**Institución / Detalle:** {subtitulo}")
 
-        st.caption(f"📁 Sección: {row.get('CATEGORIA_HOJA', '')}")
+          st.caption(f"📁 Sección: {row.get('CATEGORIA_HOJA', '')}")
 
-        # Mostrar todos los datos restantes ordenados
-        for col in columnas:
-          val = row[col]
-          if pd.notna(val) and str(val).strip() != "" and str(val) != "nan":
-            st.text(f"{col}: {val}")
+          for col in columnas:
+            val = row[col]
+            if pd.notna(val) and str(val).strip() != "" and str(val) != "nan":
+              st.text(f"{col}: {val}")
   else:
     st.warning(
         "No se encontraron coincidencias. Prueba buscando por una sola palabra"
