@@ -170,11 +170,14 @@ try:
                 if "CORREO" in col_upper:
                   correo_val = val
                   link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo_val)}"
+
+                  # Mostramos el correo con enlace a Gmail y un cuadro limpio con botón de copia integrado usando el índice único de la fila
                   st.markdown(
                       f"{col}: 📧 [{correo_val}]({link_gmail_ind}) *(Abrir en"
                       " Gmail)*",
                       unsafe_allow_html=True,
                   )
+                  st.code(correo_val, language=None)
                 else:
                   st.text(f"{col}: {val}")
   else:
