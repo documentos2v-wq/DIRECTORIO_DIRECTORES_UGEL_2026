@@ -41,14 +41,14 @@ try:
       label_visibility="collapsed",
   )
 
-  # Filtrado avanzado por palabras independientes
+  # Filtrado avanzado por palabras independientes y manejo seguro de nulos
   if busqueda:
-    # Separamos lo que escribe el usuario por espacios (ej: ["CASTRO", "RODRIGUEZ"])
     palabras = busqueda.strip().split()
 
-    # Unimos todas las columnas en un solo texto por fila para buscar en todo el registro
+    # Rellenar valores vacíos con texto vacío y convertir todo el DataFrame estrictamente a string
     df_texto = (
-        df.astype(str)
+        df.fillna("")
+        .astype(str)
         .apply(lambda x: " ".join(x), axis=1)
         .str.lower()
         .str.normalize("NFKD")
@@ -56,7 +56,6 @@ try:
         .str.decode("utf-8")
     )
 
-    # Creamos una máscara que verifique si CADA palabra ingresada está presente en el registro
     mask = pd.Series(True, index=df.index)
     for palabra in palabras:
       p_limpia = (
