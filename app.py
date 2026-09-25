@@ -1,3 +1,4 @@
+import math
 import pandas as pd
 import streamlit as st
 
@@ -15,7 +16,7 @@ st.markdown(
 )
 st.markdown(
     "<p style='text-align: center; color: #4B5563;'>Busca por cualquier"
-    " palabra clave (nombre, apellido, institución, etc.).</p>",
+    " palabra clave de forma rápida y ordenada.</p>",
     unsafe_allow_html=True,
 )
 
@@ -29,13 +30,10 @@ def cargar_datos():
   dfs = []
   for sheet in xls.sheet_names:
     temp_df = pd.read_excel(xls, sheet_name=sheet)
-    # Limpiar espacios en los nombres de columnas
     temp_df.columns = temp_df.columns.str.strip()
-    # Agregar una columna para saber de qué categoría/pestaña proviene si es útil
     temp_df["CATEGORIA_HOJA"] = sheet
     dfs.append(temp_df)
 
-  # Unir todas las hojas en una sola tabla general
   df_total = pd.concat(dfs, ignore_index=True, sort=False)
   return df_total
 
@@ -47,15 +45,13 @@ try:
   st.markdown("### 🔍 Buscador General")
   busqueda = st.text_input(
       "",
-      placeholder="Ej: Castro, Rodriguez, Juan, Primaria...",
+      placeholder="Ej: Castro, Rodriguez, Juan...",
       label_visibility="collapsed",
   )
 
-  # Filtrado flexible por palabras (Lógica OR: encuentra registros que coincidan con CUALQUIER palabra)
+  # Filtrado flexible por palabras (Lógica OR)
   if busqueda:
     palabras = busqueda.strip().split()
-
-    # Rellenar nulos y convertir todo el DataFrame a texto plano (sin tildes, minúsculas)
     df_texto = (
         df.fillna("")
         .astype(str)
@@ -66,7 +62,6 @@ try:
         .str.decode("utf-8")
     )
 
-    # Creamos una máscara con lógica OR (|): basta que una palabra coincida
     mask = pd.Series(False, index=df.index)
     for palabra in palabras:
       p_limpia = (
@@ -82,20 +77,40 @@ try:
   else:
     df_filtrado = df
 
+  total_resultados = len(df_filtrado)
+
   # Contador de resultados
   st.markdown(
       f"<p style='color: #6B7280; font-size: 14px;'>Se encontraron"
-      f" <b>{len(df_filtrado)}</b> registros.</p>",
+      f" <b>{total_resultados}</b> registros.</p>",
       unsafe_allow_html=True,
   )
   st.divider()
 
-  # Mostrar resultados en formato de tarjetas limpias (ideal para celulares)
-  if len(df_filtrado) > 0:
+  # Paginación estética: Máximo 5 registros por vista
+  if total_resultados > 0:
+    elementos_por_pagina = 5
+    total_paginas = math.ceil(total_resultados / elementos_por_pagina)
+
+    # Selector de páginas si hay más de 5 resultados
+    if total_paginas > 1:
+      pagina_actual = st.selectbox(
+          "Página de resultados:",
+          range(1, total_paginas + 1),
+          format_func=lambda x: f"Página {x} de {total_paginas}",
+      )
+    else:
+      pagina_actual = 1
+
+    # Calcular el rango de registros a mostrar en esta página
+    inicio = (pagina_actual - 1) * elementos_por_pagina
+    fin = inicio + elementos_por_pagina
+    df_pagina = df_filtrado.iloc[inicio:fin]
+
     columnas = [c for c in df_filtrado.columns if c != "CATEGORIA_HOJA"]
 
-    for index, row in df_filtrado.iterrows():
-      # Intentar extraer un título claro (nombre o institución)
+    # Mostrar los registros de la página actual en tarjetas desplegables limpias
+    for index, row in df_pagina.iterrows():
       titulo = str(
           row.get(
               "NOMBRE DIRECTOR",
@@ -113,10 +128,9 @@ try:
         if subtitulo and subtitulo != "nan":
           st.markdown(f"**Institución / Detalle:** {subtitulo}")
 
-        # Mostrar sección de la hoja de origen
         st.caption(f"📁 Sección: {row.get('CATEGORIA_HOJA', '')}")
 
-        # Mostrar campos restantes
+        # Mostrar todos los datos restantes ordenados
         for col in columnas:
           val = row[col]
           if pd.notna(val) and str(val).strip() != "" and str(val) != "nan":
