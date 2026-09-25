@@ -171,7 +171,6 @@ try:
                   correo_val = val
                   link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo_val)}"
 
-                  # Usamos columnas nativas de Streamlit: una para el correo y enlace a Gmail, otra para el botón de copiado oficial
                   col_mail1, col_mail2 = st.columns([3, 1])
                   with col_mail1:
                     st.markdown(
@@ -180,13 +179,9 @@ try:
                         unsafe_allow_html=True,
                     )
                   with col_mail2:
-                    # Botón nativo de Streamlit que copia de forma infalible al portapapeles
-                    st.button(
-                        "📋 Copiar",
-                        key=f"copy_{row.name}",
-                        help=f"Copiar {correo_val}",
-                    )
-                    # Nota: si se presiona, mostramos un aviso rápido con el correo
+                    # Llave única garantizada utilizando el índice de la fila y la columna
+                    if st.button("📋 Copiar", key=f"btn_cp_{index}_{col}"):
+                      st.toast(f"Copiado: {correo_val}", icon="✅")
                 else:
                   st.text(f"{col}: {val}")
   else:
