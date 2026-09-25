@@ -20,32 +20,42 @@ st.markdown(
 )
 
 
-# Función para cargar los datos
+# Función para cargar y unificar todas las hojas del Excel
 @st.cache_data
 def cargar_datos():
   archivo_excel = "BD - Directores.xlsx"
-  df = pd.read_excel(archivo_excel)
-  # Limpiar espacios en blanco en los nombres de las columnas
-  df.columns = df.columns.str.strip()
-  return df
+  xls = pd.ExcelFile(archivo_excel)
+
+  dfs = []
+  for sheet in xls.sheet_names:
+    temp_df = pd.read_excel(xls, sheet_name=sheet)
+    # Limpiar espacios en los nombres de columnas
+    temp_df.columns = temp_df.columns.str.strip()
+    # Agregar una columna para saber de qué categoría/pestaña proviene si es útil
+    temp_df["CATEGORIA_HOJA"] = sheet
+    dfs.append(temp_df)
+
+  # Unir todas las hojas en una sola tabla general
+  df_total = pd.concat(dfs, ignore_index=True, sort=False)
+  return df_total
 
 
 try:
   df = cargar_datos()
 
-  # Buscador general inteligente
+  # Buscador general inteligente y flexible
   st.markdown("### 🔍 Buscador General")
   busqueda = st.text_input(
       "",
-      placeholder="Ej: Castro Rodriguez, Juan, Primaria...",
+      placeholder="Ej: Castro, Rodriguez, Juan, Primaria...",
       label_visibility="collapsed",
   )
 
-  # Filtrado avanzado por palabras independientes y manejo seguro de nulos
+  # Filtrado flexible por palabras (Lógica OR: encuentra registros que coincidan con CUALQUIER palabra)
   if busqueda:
     palabras = busqueda.strip().split()
 
-    # Rellenar valores vacíos con texto vacío y convertir todo el DataFrame estrictamente a string
+    # Rellenar nulos y convertir todo el DataFrame a texto plano (sin tildes, minúsculas)
     df_texto = (
         df.fillna("")
         .astype(str)
@@ -56,7 +66,8 @@ try:
         .str.decode("utf-8")
     )
 
-    mask = pd.Series(True, index=df.index)
+    # Creamos una máscara con lógica OR (|): basta que una palabra coincida
+    mask = pd.Series(False, index=df.index)
     for palabra in palabras:
       p_limpia = (
           palabra.lower()
@@ -65,7 +76,7 @@ try:
           .strip()
       )
       if p_limpia:
-        mask = mask & df_texto.str.contains(p_limpia, na=False)
+        mask = mask | df_texto.str.contains(p_limpia, na=False)
 
     df_filtrado = df[mask]
   else:
@@ -81,24 +92,39 @@ try:
 
   # Mostrar resultados en formato de tarjetas limpias (ideal para celulares)
   if len(df_filtrado) > 0:
-    columnas = df_filtrado.columns.tolist()
+    columnas = [c for c in df_filtrado.columns if c != "CATEGORIA_HOJA"]
 
     for index, row in df_filtrado.iterrows():
-      titulo = str(row.get(columnas[1], row.get(columnas[0], "Registro")))
-      subtitulo = str(row.get(columnas[2], "")) if len(columnas) > 2 else ""
+      # Intentar extraer un título claro (nombre o institución)
+      titulo = str(
+          row.get(
+              "NOMBRE DIRECTOR",
+              row.get(columnas[1], row.get(columnas[0], "Registro")),
+          )
+      )
+      subt_col = (
+          "IE"
+          if "IE" in df_filtrado.columns
+          else (columnas[2] if len(columnas) > 2 else "")
+      )
+      subtitulo = str(row.get(subt_col, ""))
 
       with st.expander(f"📌 {titulo}"):
-        if subtitulo:
-          st.markdown(f"**Detalle principal:** {subtitulo}")
+        if subtitulo and subtitulo != "nan":
+          st.markdown(f"**Institución / Detalle:** {subtitulo}")
 
+        # Mostrar sección de la hoja de origen
+        st.caption(f"📁 Sección: {row.get('CATEGORIA_HOJA', '')}")
+
+        # Mostrar campos restantes
         for col in columnas:
           val = row[col]
-          if pd.notna(val) and str(val).strip() != "":
+          if pd.notna(val) and str(val).strip() != "" and str(val) != "nan":
             st.text(f"{col}: {val}")
   else:
     st.warning(
-        "No se encontraron coincidencias con los términos ingresados. Prueba"
-        " escribiendo solo una parte del nombre o apellido."
+        "No se encontraron coincidencias. Prueba buscando por una sola palabra"
+        " (por ejemplo: 'Castro')."
     )
 
   # Botón de descarga al final de la página
