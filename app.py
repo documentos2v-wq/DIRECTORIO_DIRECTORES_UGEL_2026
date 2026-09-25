@@ -1,3 +1,4 @@
+import urllib.parse
 import pandas as pd
 import streamlit as st
 
@@ -55,6 +56,20 @@ def obtener_campo(row, keywords):
 try:
   df = cargar_datos()
 
+  # Sección superior de herramientas de correo masivo vía Gmail
+  with st.expander(
+      "📧 Herramientas de Correo Masivo (Enviar a todos los filtrados)"
+  ):
+    st.markdown(
+        "Puedes redactar un correo y abrirlo directamente en **Gmail** con"
+        " todos los directores filtrados."
+    )
+    asunto_correo = st.text_input("Asunto del correo:", value="Comunicado UGEL")
+    cuerpo_correo = st.text_area(
+        "Mensaje del correo:",
+        value="Estimados directores,\n\nPor medio del presente...",
+    )
+
   # Buscador general inteligente y flexible
   st.markdown("### 🔍 Buscador General")
   busqueda = st.text_input(
@@ -105,27 +120,23 @@ try:
     if c and "@" in c:
       correos_filtrados.append(c)
 
-  # Sección de Copia de Correos Masivos (Soluciona el error 400 de longitud de URL)
+  # Botón dinámico para abrir Gmail con validación de límite de 150 correos
   if correos_filtrados:
-    with st.expander(
-        f"📧 Copiar lista de correos ({len(correos_filtrados)} directores"
-        " filtrados)"
-    ):
+    cantidad_correos = len(correos_filtrados)
+    if cantidad_correos <= 150:
+      lista_bcc = ",".join(correos_filtrados)
+      gmail_link = f"https://mail.google.com/mail/?view=cm&fs=1&bcc={urllib.parse.quote(lista_bcc)}&su={urllib.parse.quote(asunto_correo)}&body={urllib.parse.quote(cuerpo_correo)}"
+
       st.markdown(
-          "Debido a que Gmail limita la cantidad de caracteres por enlace, el"
-          " método más seguro y rápido es **copiar los correos** y pegarlos en"
-          " Cco (BCC) de tu correo:"
+          f'<a href="{gmail_link}" target="_blank" style="display: block; text-align: center; background-color: #EA4335; color: white; padding: 12px; border-radius: 5px; text-decoration: none; font-weight: bold; margin-bottom: 10px;">✉️ Abrir en Gmail y enviar a los {cantidad_correos} directores</a>',
+          unsafe_allow_html=True,
       )
-      texto_correos = ", ".join(correos_filtrados)
-      st.text_area(
-          "Lista de correos listos para copiar:",
-          value=texto_correos,
-          height=120,
-      )
-      st.info(
-          "💡 Consejo: Haz clic en el recuadro de arriba, presiona **Ctrl + C**"
-          " (o Clic derecho > Copiar) y pégalo en el campo **Cco (BCC)** de tu"
-          " Gmail."
+    else:
+      st.warning(
+          f"⚠️ Se encontraron {cantidad_correos} correos en esta búsqueda."
+          " Supera el límite de 150 para envío directo en enlace de Gmail."
+          " Realiza una búsqueda más específica o filtra por menor cantidad"
+          " para usar el acceso directo."
       )
 
   # Contador de resultados
@@ -198,7 +209,12 @@ try:
               if val != "" and val != "nan":
                 if "CORREO" in col_upper:
                   correo_val = val
-                  st.text(f"{col}: 📧 {correo_val}")
+                  link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo_val)}"
+                  st.markdown(
+                      f"{col}: 📧 [{correo_val}]({link_gmail_ind}) *(Abrir en"
+                      " Gmail)*",
+                      unsafe_allow_html=True,
+                  )
                 else:
                   st.text(f"{col}: {val}")
   else:
