@@ -56,13 +56,13 @@ def obtener_campo(row, keywords):
 try:
   df = cargar_datos()
 
-  # Sección superior de herramientas de envío masivo de correos
+  # Sección superior de herramientas de correo masivo vía Gmail
   with st.expander(
       "📧 Herramientas de Correo Masivo (Enviar a todos los filtrados)"
   ):
     st.markdown(
-        "Puedes redactar un correo institucional y enviarlo a todos los"
-        " directores que arroje tu búsqueda actual."
+        "Puedes redactar un correo y abrirlo directamente en **Gmail** con"
+        " todos los directores filtrados."
     )
     asunto_correo = st.text_input("Asunto del correo:", value="Comunicado UGEL")
     cuerpo_correo = st.text_area(
@@ -120,14 +120,14 @@ try:
     if c and "@" in c:
       correos_filtrados.append(c)
 
-  # Botón dinámico para enviar correo masivo a los resultados actuales
+  # Botón dinámico para abrir Gmail con los correos en BCC
   if correos_filtrados:
-    # Usamos Copia Oculta (BCC) separada por comas para proteger la privacidad de los correos
     lista_bcc = ",".join(correos_filtrados)
-    mailto_link = f"mailto:?bcc={urllib.parse.quote(lista_bcc)}&subject={urllib.parse.quote(asunto_correo)}&body={urllib.parse.quote(cuerpo_correo)}"
+    # Enlace directo a la interfaz web de Gmail con asunto, cuerpo y bcc prellenados
+    gmail_link = f"https://mail.google.com/mail/?view=cm&fs=1&bcc={urllib.parse.quote(lista_bcc)}&su={urllib.parse.quote(asunto_correo)}&body={urllib.parse.quote(cuerpo_correo)}"
 
     st.markdown(
-        f'<a href="{mailto_link}" target="_blank" style="display: block; text-align: center; background-color: #2563EB; color: white; padding: 10px; border-radius: 5px; text-decoration: none; font-weight: bold; margin-bottom: 10px;">📧 Enviar correo a los {len(correos_filtrados)} directores de esta búsqueda</a>',
+        f'<a href="{gmail_link}" target="_blank" style="display: block; text-align: center; background-color: #EA4335; color: white; padding: 12px; border-radius: 5px; text-decoration: none; font-weight: bold; margin-bottom: 10px;">✉️ Abrir en Gmail y enviar a los {len(correos_filtrados)} directores</a>',
         unsafe_allow_html=True,
     )
 
@@ -155,7 +155,7 @@ try:
         if not nombre_ie:
           nombre_ie = "IE sin nombre"
 
-        # Título principal de la tarjeta incluyendo IE, Director y Celular a la vista
+        # Título principal de la tarjeta
         if celular:
           titulo_tarjeta = (
               f"🏫 {nombre_ie} — 👤 {nombre_dir} — 📞 {celular}"
@@ -166,7 +166,6 @@ try:
         with st.expander(titulo_tarjeta):
           st.caption(f"📁 Sección: {row.get('CATEGORIA_HOJA', '')}")
 
-          # Mostrar datos detallados dentro de la tarjeta
           st.markdown(f"**IE:** 🏫 {nombre_ie}")
           st.markdown(f"**Nombre Director:** 👤 {nombre_dir}")
 
@@ -192,7 +191,6 @@ try:
           st.divider()
           st.markdown("**Otros detalles del registro:**")
 
-          # Mostrar el resto de campos secundarios
           for col in columnas:
             val = limpiar_texto(row[col])
             col_upper = col.upper()
@@ -203,9 +201,11 @@ try:
               if val != "" and val != "nan":
                 if "CORREO" in col_upper:
                   correo_val = val
-                  link_mail = f"mailto:{correo_val}"
+                  # Enlace directo para redactar correo individual en Gmail web
+                  link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo_val)}"
                   st.markdown(
-                      f"{col}: 📧 [{correo_val}]({link_mail})",
+                      f"{col}: 📧 [{correo_val}]({link_gmail_ind}) *(Abrir en"
+                      " Gmail)*",
                       unsafe_allow_html=True,
                   )
                 else:
