@@ -28,7 +28,6 @@ def cargar_datos():
   df = pd.read_excel(archivo_excel, sheet_name="PUBLICAS")
   df.columns = df.columns.str.strip()
   df = df.dropna(subset=["NOMBRE DIRECTOR", "IE"], how="all")
-  df["CATEGORIA_HOJA"] = "PUBLICAS"
   return df
 
 
@@ -109,7 +108,7 @@ try:
 
   # Contenedor con barra de desplazamiento vertical de altura fija
   if total_resultados > 0:
-    columnas = [c for c in df_filtrado.columns if c != "CATEGORIA_HOJA"]
+    columnas = [c for c in df_filtrado.columns]
 
     with st.container(height=480):
       for index, row in df_filtrado.iterrows():
@@ -117,13 +116,14 @@ try:
         nombre_ie = obtener_campo(row, ["IE", "INSTITUCION"])
         celular = obtener_campo(row, ["CELULAR", "TELEFONO", "MOVIL"])
         cod_modular = obtener_campo(row, ["MODULAR", "CODIGO MODULAR"])
+        correo = obtener_campo(row, ["CORREO", "EMAIL"])
 
         if not nombre_dir:
           nombre_dir = "Sin nombre registrado"
         if not nombre_ie:
           nombre_ie = "IE sin nombre"
 
-        # Título principal de la tarjeta limpio y ordenado
+        # Título principal de la tarjeta limpio y ordenado con IE, Director y Celular
         if celular:
           titulo_tarjeta = (
               f"🏫 {nombre_ie} — 👤 {nombre_dir} — 📞 {celular}"
@@ -132,8 +132,6 @@ try:
           titulo_tarjeta = f"🏫 {nombre_ie} — 👤 {nombre_dir} — 📞 (Sin celular)"
 
         with st.expander(titulo_tarjeta):
-          st.caption(f"📁 Sección: {row.get('CATEGORIA_HOJA', '')}")
-
           st.markdown(f"**IE:** 🏫 {nombre_ie}")
           st.markdown(f"**Nombre Director:** 👤 {nombre_dir}")
 
@@ -156,34 +154,35 @@ try:
           else:
             st.markdown("**Código Modular:** 🔢 No registrado")
 
+          # Ubicamos el correo principal y su botón de copia directamente en la cabecera
+          if correo:
+            link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo)}"
+            col_mail1, col_mail2 = st.columns([3, 1])
+            with col_mail1:
+              st.markdown(
+                  f"**Correo:** 📧 [{correo}]({link_gmail_ind}) *(Abrir en"
+                  " Gmail)*",
+                  unsafe_allow_html=True,
+              )
+            with col_mail2:
+              if st.button("📋 Copiar", key=f"btn_cp_{index}_correo"):
+                st.toast(f"¡Correo copiado: {correo}!", icon="✅")
+          else:
+            st.markdown("**Correo:** 📧 No registrado")
+
           st.divider()
           st.markdown("**Otros detalles del registro:**")
 
+          # Mostrar el resto de campos secundarios (excluyendo los principales ya mostrados)
           for col in columnas:
             val = limpiar_texto(row[col])
             col_upper = col.upper()
             if not any(
                 k in col_upper
-                for k in ["DIRECTOR", "IE", "CELULAR", "MODULAR"]
+                for k in ["DIRECTOR", "IE", "CELULAR", "MODULAR", "CORREO"]
             ):
               if val != "" and val != "nan":
-                if "CORREO" in col_upper:
-                  correo_val = val
-                  link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo_val)}"
-
-                  col_mail1, col_mail2 = st.columns([3, 1])
-                  with col_mail1:
-                    st.markdown(
-                        f"{col}: 📧 [{correo_val}]({link_gmail_ind}) *(Abrir en"
-                        " Gmail)*",
-                        unsafe_allow_html=True,
-                    )
-                  with col_mail2:
-                    # Llave única garantizada utilizando el índice de la fila y la columna
-                    if st.button("📋 Copiar", key=f"btn_cp_{index}_{col}"):
-                      st.toast(f"Copiado: {correo_val}", icon="✅")
-                else:
-                  st.text(f"{col}: {val}")
+                st.text(f"{col}: {val}")
   else:
     st.warning(
         "No se encontraron coincidencias. Prueba buscando por una sola palabra"
