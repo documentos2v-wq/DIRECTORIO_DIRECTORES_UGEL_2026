@@ -20,7 +20,7 @@ st.markdown(
 )
 
 
-# Función para cargar y unificar todas las hojas del Excel limpiando filas vacías o correlativas
+# Función para cargar y unificar todas las hojas del Excel
 @st.cache_data
 def cargar_datos():
   archivo_excel = "BD - Directores.xlsx"
@@ -30,9 +30,6 @@ def cargar_datos():
   for sheet in xls.sheet_names:
     temp_df = pd.read_excel(xls, sheet_name=sheet)
     temp_df.columns = temp_df.columns.str.strip()
-
-    # Omitir filas donde no existan datos reales de director o IE
-    temp_df = temp_df.dropna(how="all")
     temp_df["CATEGORIA_HOJA"] = sheet
     dfs.append(temp_df)
 
@@ -76,6 +73,7 @@ try:
   if busqueda:
     palabras = busqueda.strip().split()
 
+    # Crear una versión de texto plano normalizada de todo el DataFrame
     df_texto = (
         df.fillna("")
         .astype(str)
@@ -95,6 +93,8 @@ try:
           .strip()
       )
       if p_limpia:
+        # Si la palabra es un número con ceros a la izquierda (ej: 0267385),
+        # también buscamos su versión sin ceros (ej: 267385) para asegurar que lo encuentre.
         p_alternativa = p_limpia.lstrip("0") if p_limpia.isdigit() else p_limpia
 
         mask = mask | df_texto.str.contains(p_limpia, na=False)
@@ -104,14 +104,6 @@ try:
     df_filtrado = df[mask]
   else:
     df_filtrado = df
-
-  # Filtrar filas basura (donde el nombre sea un número simple como '5', '6', etc.)
-  if len(df_filtrado) > 0:
-    df_filtrado = df_filtrado[
-        ~df_filtrado.astype(str)
-        .apply(lambda x: x.str.match(r"^\d+$"))
-        .any(axis=1)
-    ]
 
   total_resultados = len(df_filtrado)
 
@@ -129,6 +121,7 @@ try:
 
     with st.container(height=480):
       for index, row in df_filtrado.iterrows():
+        # Extraer campos clave de forma inteligente usando palabras clave
         nombre_dir = obtener_campo(row, ["DIRECTOR", "NOMBRES Y APELLIDOS"])
         nombre_ie = obtener_campo(row, ["IE", "INSTITUCION"])
         celular = obtener_campo(row, ["CELULAR", "TELEFONO", "MOVIL"])
@@ -139,7 +132,7 @@ try:
         if not nombre_ie:
           nombre_ie = "IE sin nombre"
 
-        # Título principal de la tarjeta mostrando IE, Director y Celular a la vista
+        # Título principal de la tarjeta incluyendo IE, Director y Celular a la vista
         if celular:
           titulo_tarjeta = (
               f"🏫 {nombre_ie} — 👤 {nombre_dir} — 📞 {celular}"
@@ -150,7 +143,7 @@ try:
         with st.expander(titulo_tarjeta):
           st.caption(f"📁 Sección: {row.get('CATEGORIA_HOJA', '')}")
 
-          # Datos detallados dentro de la tarjeta
+          # Mostrar datos detallados dentro de la tarjeta
           st.markdown(f"**IE:** 🏫 {nombre_ie}")
           st.markdown(f"**Nombre Director:** 👤 {nombre_dir}")
 
@@ -202,7 +195,7 @@ try:
       label="📥 Descargar resultados en CSV",
       data=csv,
       file_name="directores_filtrados.csv",
-      mime="text/css",
+      mime="text/csv",
       use_container_width=True,
   )
 
