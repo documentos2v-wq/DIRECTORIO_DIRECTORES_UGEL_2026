@@ -102,52 +102,59 @@ try:
 
     with st.container(height=480):
       for index, row in df_filtrado.iterrows():
-        titulo = limpiar_texto(
-            row.get(
-                "NOMBRE DIRECTOR",
-                row.get(columnas[1], row.get(columnas[0], "Registro")),
-            )
-        )
-        subt_col = (
-            "IE"
-            if "IE" in df_filtrado.columns
-            else (columnas[2] if len(columnas) > 2 else "")
-        )
-        subtitulo = limpiar_texto(row.get(subt_col, ""))
+        # Extraer campos clave de forma segura
+        nombre_dir = limpiar_texto(row.get("NOMBRE DIRECTOR", ""))
+        nombre_ie = limpiar_texto(row.get("IE", ""))
+        celular = limpiar_texto(row.get("CELULAR", ""))
+        cod_modular = limpiar_texto(row.get("CODIGO MODULAR", ""))
 
-        with st.expander(f"📌 {titulo}"):
-          if subtitulo and subtitulo != "nan":
-            st.markdown(f"**Institución / Detalle:** {subtitulo}")
+        # Definir el título visible de la tarjeta con la IE y el Director
+        titulo_tarjeta = f"🏫 {nombre_ie} — 👤 {nombre_dir}"
 
+        with st.expander(titulo_tarjeta):
           st.caption(f"📁 Sección: {row.get('CATEGORIA_HOJA', '')}")
 
+          # Mostrar explícitamente los datos principales solicitados arriba
+          if nombre_ie:
+            st.markdown(f"**IE:** 🏫 {nombre_ie}")
+          if nombre_dir:
+            st.markdown(f"**Nombre Director:** 👤 {nombre_dir}")
+
+          if celular:
+            num_limpio = "".join(filter(str.isdigit, celular))
+            num_whatsapp = (
+                f"51{num_limpio}" if len(num_limpio) == 9 else num_limpio
+            )
+            link_wa = f"https://wa.me/{num_whatsapp}"
+            st.markdown(
+                f"**Celular:** 📞 [{celular}]({link_wa}) 🟢 *(Clic para"
+                " WhatsApp)*",
+                unsafe_allow_html=True,
+            )
+
+          if cod_modular:
+            st.markdown(f"**Código Modular:** 🔢 {cod_modular}")
+
+          st.divider()
+          st.markdown("**Otros detalles del registro:**")
+
+          # Mostrar el resto de campos que no sean los principales ya mostrados
+          principales = [
+              "NOMBRE DIRECTOR",
+              "IE",
+              "CELULAR",
+              "CODIGO MODULAR",
+              "DJ CORREO",
+          ]
           for col in columnas:
-            val = limpiar_texto(row[col])
-            if val != "" and val != "nan":
-              col_upper = col.upper()
-
-              # Si es celular, creamos un enlace interactivo de WhatsApp
-              if "CELULAR" in col_upper:
-                # Limpiar el número para dejar solo dígitos (asumiendo código de Perú +51 si no lo tiene)
-                num_limpio = "".join(filter(str.isdigit, val))
-                if len(num_limpio) == 9:  # Formato celular Perú estándar
-                  num_whatsapp = f"51{num_limpio}"
+            if col not in principales:
+              val = limpiar_texto(row[col])
+              if val != "" and val != "nan":
+                col_upper = col.upper()
+                if "CORREO" in col_upper:
+                  st.text(f"{col}: 📧 {val}")
                 else:
-                  num_whatsapp = num_limpio
-
-                link_wa = f"https://wa.me/{num_whatsapp}"
-                st.markdown(
-                    f"{col}: 📞 [{val}]({link_wa}) 🟢 *(Clic para WhatsApp)*",
-                    unsafe_allow_html=True,
-                )
-              elif "IE" == col_upper:
-                st.text(f"{col}: 🏫 {val}")
-              elif "CORREO" in col_upper:
-                st.text(f"{col}: 📧 {val}")
-              elif "DIRECTOR" in col_upper:
-                st.text(f"{col}: 👤 {val}")
-              else:
-                st.text(f"{col}: {val}")
+                  st.text(f"{col}: {val}")
   else:
     st.warning(
         "No se encontraron coincidencias. Prueba buscando por una sola palabra"
@@ -161,7 +168,7 @@ try:
       label="📥 Descargar resultados en CSV",
       data=csv,
       file_name="directores_filtrados.csv",
-      mime="text/csv",
+      mime="text/css",
       use_container_width=True,
   )
 
