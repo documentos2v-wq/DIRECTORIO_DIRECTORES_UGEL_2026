@@ -171,15 +171,12 @@ try:
                   correo_val = val
                   link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo_val)}"
 
-                  # Mostramos el correo con enlace a Gmail y al lado un botón compacto de copia usando st.copy_to_clipboard (o st.code optimizado y compacto)
+                  # Diseño ultra compacto en una sola línea: icono de correo, enlace a Gmail y un mini botón estético al lado
                   st.markdown(
                       f"{col}: 📧 [{correo_val}]({link_gmail_ind}) *(Abrir en"
-                      " Gmail)*",
+                      f" Gmail)* &nbsp;|&nbsp; 📋 `{correo_val}`",
                       unsafe_allow_html=True,
                   )
-                  # Usamos un botón nativo compacto para copiar el texto limpio de manera elegante
-                  st.caption(f"Copiar dirección de correo:")
-                  st.code(correo_val, language=None)
                 else:
                   st.text(f"{col}: {val}")
   else:
@@ -195,7 +192,7 @@ try:
       label="📥 Descargar resultados en CSV",
       data=csv,
       file_name="directores_filtrados.csv",
-      mime="text/css",
+      mime="text/csv",
       use_container_width=True,
   )
 
