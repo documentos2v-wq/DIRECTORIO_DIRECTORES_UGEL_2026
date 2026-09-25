@@ -9,13 +9,13 @@ st.set_page_config(
 )
 
 st.markdown(
-    "<h1 style='text-align: center; color: #1E3A8A;'>Directory de"
+    "<h1 style='text-align: center; color: #1E3A8A;'>Directorio de"
     " Directores</h1>",
     unsafe_allow_html=True,
 )
 st.markdown(
-    "<p style='text-align: center; color: #4B5563;'>Busca de forma rápida y"
-    " ordenada la información de las instituciones educativas.</p>",
+    "<p style='text-align: center; color: #4B5563;'>Busca por cualquier"
+    " palabra clave (nombre, apellido, institución, etc.).</p>",
     unsafe_allow_html=True,
 )
 
@@ -25,7 +25,7 @@ st.markdown(
 def cargar_datos():
   archivo_excel = "BD - Directores.xlsx"
   df = pd.read_excel(archivo_excel)
-  # Limpiar espacios en blanco en los nombres de las columnas por seguridad
+  # Limpiar espacios en blanco en los nombres de las columnas
   df.columns = df.columns.str.strip()
   return df
 
@@ -33,21 +33,41 @@ def cargar_datos():
 try:
   df = cargar_datos()
 
-  # Buscador general automatizado
+  # Buscador general inteligente
   st.markdown("### 🔍 Buscador General")
   busqueda = st.text_input(
       "",
-      placeholder="Escribe nombre, institución, DNI o código...",
+      placeholder="Ej: Castro Rodriguez, Juan, Primaria...",
       label_visibility="collapsed",
   )
 
-  # Filtrado global
+  # Filtrado avanzado por palabras independientes
   if busqueda:
-    mask = (
+    # Separamos lo que escribe el usuario por espacios (ej: ["CASTRO", "RODRIGUEZ"])
+    palabras = busqueda.strip().split()
+
+    # Unimos todas las columnas en un solo texto por fila para buscar en todo el registro
+    df_texto = (
         df.astype(str)
-        .apply(lambda x: x.str.contains(busqueda, case=False, na=False))
-        .any(axis=1)
+        .apply(lambda x: " ".join(x), axis=1)
+        .str.lower()
+        .str.normalize("NFKD")
+        .str.encode("ascii", errors="ignore")
+        .str.decode("utf-8")
     )
+
+    # Creamos una máscara que verifique si CADA palabra ingresada está presente en el registro
+    mask = pd.Series(True, index=df.index)
+    for palabra in palabras:
+      p_limpia = (
+          palabra.lower()
+          .encode("ascii", errors="ignore")
+          .decode("utf-8")
+          .strip()
+      )
+      if p_limpia:
+        mask = mask & df_texto.str.contains(p_limpia, na=False)
+
     df_filtrado = df[mask]
   else:
     df_filtrado = df
@@ -62,30 +82,24 @@ try:
 
   # Mostrar resultados en formato de tarjetas limpias (ideal para celulares)
   if len(df_filtrado) > 0:
-    # Identificar nombres lógicos de columnas si existen, o usar las primeras disponibles
     columnas = df_filtrado.columns.tolist()
 
     for index, row in df_filtrado.iterrows():
-      # Tomamos el primer valor como título principal (ej: Nombre o Institución) y el segundo como subtítulo
-      titulo = str(
-          row.get(columnas[1], row.get(columnas[0], "Registro"))
-      )  # Ajusta según tus columnas
+      titulo = str(row.get(columnas[1], row.get(columnas[0], "Registro")))
       subtitulo = str(row.get(columnas[2], "")) if len(columnas) > 2 else ""
 
-      # Creamos una tarjeta expandible para cada registro
       with st.expander(f"📌 {titulo}"):
         if subtitulo:
           st.markdown(f"**Detalle principal:** {subtitulo}")
 
-        # Mostrar todos los campos restantes de manera ordenada en lista
         for col in columnas:
           val = row[col]
           if pd.notna(val) and str(val).strip() != "":
             st.text(f"{col}: {val}")
   else:
     st.warning(
-        "No se encontraron coincidencias con los datos ingresados. Intente"
-        " con otro término."
+        "No se encontraron coincidencias con los términos ingresados. Prueba"
+        " escribiendo solo una parte del nombre o apellido."
     )
 
   # Botón de descarga al final de la página
