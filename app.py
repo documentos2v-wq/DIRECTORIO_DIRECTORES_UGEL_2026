@@ -56,29 +56,6 @@ def obtener_campo(row, keywords):
 try:
   df = cargar_datos()
 
-  # Inicializar la memoria de sesión para acumular correos seleccionados
-  if "correos_acumulados" not in st.session_state:
-    st.session_state.correos_acumulados = set()
-
-  # Sección superior de herramientas de correo masivo
-  with st.expander(
-      "📧 Redactar Correo Masivo (Para directores acumulados en la selección)"
-  ):
-    st.markdown(
-        "Redacta tu mensaje. Los correos se acumularán conforme busques y"
-        " selecciones directores en distintas búsquedas."
-    )
-    asunto_correo = st.text_input("Asunto del correo:", value="Comunicado UGEL")
-    cuerpo_correo = st.text_area(
-        "Mensaje del correo:",
-        value="Estimados directores,\n\nPor medio del presente...",
-    )
-
-    if st.session_state.correos_acumulados:
-      if st.button("🗑️ Limpiar lista de correos acumulados"):
-        st.session_state.correos_acumulados.clear()
-        st.rerun()
-
   # Buscador general inteligente y flexible
   st.markdown("### 🔍 Buscador General")
   busqueda = st.text_input(
@@ -140,14 +117,13 @@ try:
         nombre_ie = obtener_campo(row, ["IE", "INSTITUCION"])
         celular = obtener_campo(row, ["CELULAR", "TELEFONO", "MOVIL"])
         cod_modular = obtener_campo(row, ["MODULAR", "CODIGO MODULAR"])
-        correo = obtener_campo(row, ["CORREO", "EMAIL"])
 
         if not nombre_dir:
           nombre_dir = "Sin nombre registrado"
         if not nombre_ie:
           nombre_ie = "IE sin nombre"
 
-        # Título principal de la tarjeta
+        # Título principal de la tarjeta limpio y ordenado
         if celular:
           titulo_tarjeta = (
               f"🏫 {nombre_ie} — 👤 {nombre_dir} — 📞 {celular}"
@@ -156,22 +132,6 @@ try:
           titulo_tarjeta = f"🏫 {nombre_ie} — 👤 {nombre_dir} — 📞 (Sin celular)"
 
         with st.expander(titulo_tarjeta):
-          if correo and "@" in correo:
-            ya_seleccionado = correo in st.session_state.correos_acumulados
-
-            marcar = st.checkbox(
-                f"✅ Seleccionar para correo masivo ({correo})",
-                value=ya_seleccionado,
-                key=f"chk_{row.name}",
-            )
-
-            if marcar and not ya_seleccionado:
-              st.session_state.correos_acumulados.add(correo)
-            elif not marcar and ya_seleccionado:
-              st.session_state.correos_acumulados.discard(correo)
-          else:
-            st.caption("⚠️ Este registro no cuenta con correo electrónico válido.")
-
           st.caption(f"📁 Sección: {row.get('CATEGORIA_HOJA', '')}")
 
           st.markdown(f"**IE:** 🏫 {nombre_ie}")
@@ -209,57 +169,18 @@ try:
               if val != "" and val != "nan":
                 if "CORREO" in col_upper:
                   correo_val = val
-                  # Creamos dos columnas compactas: una para el correo con enlace a Gmail y otra con un botón nativo de Streamlit para copiar
-                  col_a, col_b = st.columns([3, 1])
-                  with col_a:
-                    link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo_val)}"
-                    st.markdown(
-                        f"{col}: 📧 [{correo_val}]({link_gmail_ind})",
-                        unsafe_allow_html=True,
-                    )
-                  with col_b:
-                    if st.button("📋 Copiar", key=f"btn_copy_{row.name}"):
-                      st.write(
-                          f'<script>navigator.clipboard.writeText("{correo_val}");</script>',
-                          unsafe_allow_html=True,
-                      )
-                      st.toast(f"¡Copiado: {correo_val}!", icon="✅")
+                  link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo_val)}"
+                  st.markdown(
+                      f"{col}: 📧 [{correo_val}]({link_gmail_ind}) *(Abrir en"
+                      " Gmail)*",
+                      unsafe_allow_html=True,
+                  )
                 else:
                   st.text(f"{col}: {val}")
   else:
     st.warning(
         "No se encontraron coincidencias. Prueba buscando por una sola palabra"
         " o número."
-    )
-
-  # Panel inferior dinámico para enviar a los acumulados
-  st.divider()
-  cant_acumulada = len(st.session_state.correos_acumulados)
-
-  if cant_acumulada > 0:
-    st.info(
-        f"📌 Tienes acumulados **{cant_acumulada}** directores en tu lista de"
-        " envío."
-    )
-
-    if cant_acumulada <= 150:
-      lista_bcc = ",".join(st.session_state.correos_acumulados)
-      gmail_link = f"https://mail.google.com/mail/?view=cm&fs=1&bcc={urllib.parse.quote(lista_bcc)}&su={urllib.parse.quote(asunto_correo)}&body={urllib.parse.quote(cuerpo_correo)}"
-
-      st.markdown(
-          f'<a href="{gmail_link}" target="_blank" style="display: block; text-align: center; background-color: #EA4335; color: white; padding: 12px; border-radius: 5px; text-decoration: none; font-weight: bold; margin-bottom: 10px;">✉️ Abrir en Gmail y enviar a los {cant_acumulada} acumulados</a>',
-          unsafe_allow_html=True,
-      )
-    else:
-      st.error(
-          f"⚠️ Tienes {cant_acumulada} correos acumulados. Supera el límite de"
-          " 150 para envíos directos en enlace de Gmail. Desmarca algunos"
-          " para quedar por debajo de 150."
-      )
-  else:
-    st.markdown(
-        "*(Busca y marca las casillas de los directores en diferentes"
-        " búsquedas; se irán acumulando automáticamente aquí)*"
     )
 
   # Botón de descarga al final de la página
