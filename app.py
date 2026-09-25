@@ -56,7 +56,7 @@ def obtener_campo(row, keywords):
 try:
   df = cargar_datos()
 
-  # Inicializar la memoria de sesión para acumular correos seleccionados de forma persistente
+  # Inicializar la memoria de sesión para acumular correos seleccionados
   if "correos_acumulados" not in st.session_state:
     st.session_state.correos_acumulados = set()
 
@@ -157,7 +157,6 @@ try:
 
         with st.expander(titulo_tarjeta):
           if correo and "@" in correo:
-            # Comprobar si ya está acumulado en la sesión
             ya_seleccionado = correo in st.session_state.correos_acumulados
 
             marcar = st.checkbox(
@@ -210,12 +209,17 @@ try:
               if val != "" and val != "nan":
                 if "CORREO" in col_upper:
                   correo_val = val
-                  link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo_val)}"
-                  st.markdown(
-                      f"{col}: 📧 [{correo_val}]({link_gmail_ind}) *(Abrir en"
-                      " Gmail)*",
-                      unsafe_allow_html=True,
-                  )
+                  # Creamos una fila dividida en columnas: una para el texto del correo y otra con el botón de copiado rápido
+                  col_c1, col_c2 = st.columns([3, 1])
+                  with col_c1:
+                    link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo_val)}"
+                    st.markdown(
+                        f"{col}: 📧 [{correo_val}]({link_gmail_ind})",
+                        unsafe_allow_html=True,
+                    )
+                  with col_c2:
+                    # Usamos st.code integrado que trae su propio botón de copiado al portapapeles
+                    st.code(correo_val, language=None)
                 else:
                   st.text(f"{col}: {val}")
   else:
