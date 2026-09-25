@@ -124,13 +124,18 @@ try:
         if not nombre_ie:
           nombre_ie = "IE sin nombre"
 
-        # Título principal de la tarjeta con IE y Director
-        titulo_tarjeta = f"🏫 {nombre_ie} — 👤 {nombre_dir}"
+        # Título principal de la tarjeta incluyendo IE, Director y Celular a la vista
+        if celular:
+          titulo_tarjeta = (
+              f"🏫 {nombre_ie} — 👤 {nombre_dir} — 📞 {celular}"
+          )
+        else:
+          titulo_tarjeta = f"🏫 {nombre_ie} — 👤 {nombre_dir} — 📞 (Sin celular)"
 
         with st.expander(titulo_tarjeta):
           st.caption(f"📁 Sección: {row.get('CATEGORIA_HOJA', '')}")
 
-          # Mostrar datos principales organizados con sus respectivos iconos
+          # Mostrar datos detallados dentro de la tarjeta
           st.markdown(f"**IE:** 🏫 {nombre_ie}")
           st.markdown(f"**Nombre Director:** 👤 {nombre_dir}")
 
@@ -160,7 +165,6 @@ try:
           for col in columnas:
             val = limpiar_texto(row[col])
             col_upper = col.upper()
-            # Omitir los que ya mostramos arriba para no duplicar
             if not any(
                 k in col_upper
                 for k in ["DIRECTOR", "IE", "CELULAR", "MODULAR"]
@@ -183,7 +187,7 @@ try:
       label="📥 Descargar resultados en CSV",
       data=csv,
       file_name="directores_filtrados.csv",
-      mime="text/csv",
+      mime="text/css",
       use_container_width=True,
   )
 
