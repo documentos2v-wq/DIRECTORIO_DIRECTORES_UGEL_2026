@@ -47,6 +47,17 @@ def limpiar_texto(val):
   return s
 
 
+# Función auxiliar para buscar un valor buscando por palabras clave en las columnas
+def obtener_campo(row, keywords):
+  for col in row.index:
+    col_up = str(col).upper()
+    if any(k in col_up for k in keywords):
+      val = limpiar_texto(row[col])
+      if val != "" and val != "nan":
+        return val
+  return ""
+
+
 try:
   df = cargar_datos()
 
@@ -102,23 +113,26 @@ try:
 
     with st.container(height=480):
       for index, row in df_filtrado.iterrows():
-        # Extraer campos clave de forma segura
-        nombre_dir = limpiar_texto(row.get("NOMBRE DIRECTOR", ""))
-        nombre_ie = limpiar_texto(row.get("IE", ""))
-        celular = limpiar_texto(row.get("CELULAR", ""))
-        cod_modular = limpiar_texto(row.get("CODIGO MODULAR", ""))
+        # Extraer campos clave de forma inteligente usando palabras clave
+        nombre_dir = obtener_campo(row, ["DIRECTOR", "NOMBRES Y APELLIDOS"])
+        nombre_ie = obtener_campo(row, ["IE", "INSTITUCION"])
+        celular = obtener_campo(row, ["CELULAR", "TELEFONO", "MOVIL"])
+        cod_modular = obtener_campo(row, ["MODULAR", "CODIGO MODULAR"])
 
-        # Definir el título visible de la tarjeta con la IE y el Director
+        if not nombre_dir:
+          nombre_dir = "Sin nombre registrado"
+        if not nombre_ie:
+          nombre_ie = "IE sin nombre"
+
+        # Título principal de la tarjeta con IE y Director
         titulo_tarjeta = f"🏫 {nombre_ie} — 👤 {nombre_dir}"
 
         with st.expander(titulo_tarjeta):
           st.caption(f"📁 Sección: {row.get('CATEGORIA_HOJA', '')}")
 
-          # Mostrar explícitamente los datos principales solicitados arriba
-          if nombre_ie:
-            st.markdown(f"**IE:** 🏫 {nombre_ie}")
-          if nombre_dir:
-            st.markdown(f"**Nombre Director:** 👤 {nombre_dir}")
+          # Mostrar datos principales organizados con sus respectivos iconos
+          st.markdown(f"**IE:** 🏫 {nombre_ie}")
+          st.markdown(f"**Nombre Director:** 👤 {nombre_dir}")
 
           if celular:
             num_limpio = "".join(filter(str.isdigit, celular))
@@ -131,26 +145,27 @@ try:
                 " WhatsApp)*",
                 unsafe_allow_html=True,
             )
+          else:
+            st.markdown("**Celular:** 📞 No registrado")
 
           if cod_modular:
             st.markdown(f"**Código Modular:** 🔢 {cod_modular}")
+          else:
+            st.markdown("**Código Modular:** 🔢 No registrado")
 
           st.divider()
           st.markdown("**Otros detalles del registro:**")
 
-          # Mostrar el resto de campos que no sean los principales ya mostrados
-          principales = [
-              "NOMBRE DIRECTOR",
-              "IE",
-              "CELULAR",
-              "CODIGO MODULAR",
-              "DJ CORREO",
-          ]
+          # Mostrar el resto de campos secundarios
           for col in columnas:
-            if col not in principales:
-              val = limpiar_texto(row[col])
+            val = limpiar_texto(row[col])
+            col_upper = col.upper()
+            # Omitir los que ya mostramos arriba para no duplicar
+            if not any(
+                k in col_upper
+                for k in ["DIRECTOR", "IE", "CELULAR", "MODULAR"]
+            ):
               if val != "" and val != "nan":
-                col_upper = col.upper()
                 if "CORREO" in col_upper:
                   st.text(f"{col}: 📧 {val}")
                 else:
@@ -168,7 +183,7 @@ try:
       label="📥 Descargar resultados en CSV",
       data=csv,
       file_name="directores_filtrados.csv",
-      mime="text/css",
+      mime="text/csv",
       use_container_width=True,
   )
 
