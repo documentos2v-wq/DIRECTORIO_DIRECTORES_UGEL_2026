@@ -56,19 +56,28 @@ def obtener_campo(row, keywords):
 try:
   df = cargar_datos()
 
+  # Inicializar la memoria de sesión para acumular correos seleccionados de forma persistente
+  if "correos_acumulados" not in st.session_state:
+    st.session_state.correos_acumulados = set()
+
   # Sección superior de herramientas de correo masivo
   with st.expander(
-      "📧 Redactar Correo Masivo (Para directores seleccionados)"
+      "📧 Redactar Correo Masivo (Para directores acumulados en la selección)"
   ):
     st.markdown(
-        "Redacta tu mensaje. El botón de envío se activará automáticamente con"
-        " los directores que vayas marcando en la lista."
+        "Redacta tu mensaje. Los correos se acumularán conforme busques y"
+        " selecciones directores en distintas búsquedas."
     )
     asunto_correo = st.text_input("Asunto del correo:", value="Comunicado UGEL")
     cuerpo_correo = st.text_area(
         "Mensaje del correo:",
         value="Estimados directores,\n\nPor medio del presente...",
     )
+
+    if st.session_state.correos_acumulados:
+      if st.button("🗑️ Limpiar lista de correos acumulados"):
+        st.session_state.correos_acumulados.clear()
+        st.rerun()
 
   # Buscador general inteligente y flexible
   st.markdown("### 🔍 Buscador General")
@@ -113,7 +122,7 @@ try:
 
   total_resultados = len(df_filtrado)
 
-  # Contador de resultados y espacio para selecciones
+  # Contador de resultados
   st.markdown(
       f"<p style='color: #6B7280; font-size: 14px;'>Se encontraron"
       f" <b>{total_resultados}</b> registros.</p>",
@@ -122,8 +131,6 @@ try:
   st.divider()
 
   # Contenedor con barra de desplazamiento vertical de altura fija
-  correos_seleccionados = []
-
   if total_resultados > 0:
     columnas = [c for c in df_filtrado.columns if c != "CATEGORIA_HOJA"]
 
@@ -149,14 +156,20 @@ try:
           titulo_tarjeta = f"🏫 {nombre_ie} — 👤 {nombre_dir} — 📞 (Sin celular)"
 
         with st.expander(titulo_tarjeta):
-          # Casilla de selección para agregar al correo masivo
           if correo and "@" in correo:
+            # Comprobar si ya está acumulado en la sesión
+            ya_seleccionado = correo in st.session_state.correos_acumulados
+
             marcar = st.checkbox(
                 f"✅ Seleccionar para correo masivo ({correo})",
-                key=f"chk_{index}",
+                value=ya_seleccionado,
+                key=f"chk_{row.name}",
             )
-            if marcar:
-              correos_seleccionados.append(correo)
+
+            if marcar and not ya_seleccionado:
+              st.session_state.correos_acumulados.add(correo)
+            elif not marcar and ya_seleccionado:
+              st.session_state.correos_acumulados.discard(correo)
           else:
             st.caption("⚠️ Este registro no cuenta con correo electrónico válido.")
 
@@ -211,33 +224,38 @@ try:
         " o número."
     )
 
-  # Panel inferior dinámico para enviar a los seleccionados
+  # Panel inferior dinámico para enviar a los acumulados
   st.divider()
-  if correos_seleccionados:
-    cant_sel = len(correos_seleccionados)
-    st.info(f"📌 Has seleccionado **{cant_sel}** directores para enviar correo.")
+  cant_acumulada = len(st.session_state.correos_acumulados)
 
-    if cant_sel <= 150:
-      lista_bcc = ",".join(correos_seleccionados)
+  if cant_acumulada > 0:
+    st.info(
+        f"📌 Tienes acumulados **{cant_acumulada}** directores en tu lista de"
+        " envío."
+    )
+
+    if cant_acumulada <= 150:
+      lista_bcc = ",".join(st.session_state.correos_acumulados)
       gmail_link = f"https://mail.google.com/mail/?view=cm&fs=1&bcc={urllib.parse.quote(lista_bcc)}&su={urllib.parse.quote(asunto_correo)}&body={urllib.parse.quote(cuerpo_correo)}"
 
       st.markdown(
-          f'<a href="{gmail_link}" target="_blank" style="display: block; text-align: center; background-color: #EA4335; color: white; padding: 12px; border-radius: 5px; text-decoration: none; font-weight: bold; margin-bottom: 10px;">✉️ Abrir en Gmail y enviar a los {cant_sel} seleccionados</a>',
+          f'<a href="{gmail_link}" target="_blank" style="display: block; text-align: center; background-color: #EA4335; color: white; padding: 12px; border-radius: 5px; text-decoration: none; font-weight: bold; margin-bottom: 10px;">✉️ Abrir en Gmail y enviar a los {cant_acumulada} acumulados</a>',
           unsafe_allow_html=True,
       )
     else:
       st.error(
-          f"⚠️ Has seleccionado {cant_sel} correos. Supera el límite de 150"
-          " para envíos directos en enlace de Gmail. Desmarca algunos para"
-          " quedar por debajo de 150."
+          f"⚠️ Tienes {cant_acumulada} correos acumulados. Supera el límite de"
+          " 150 para envíos directos en enlace de Gmail. Desmarca algunos"
+          " para quedar por debajo de 150."
       )
   else:
     st.markdown(
-        "*(Marca las casillas dentro de las tarjetas de los directores para"
-        " habilitar el botón de envío masivo)*"
+        "*(Busca y marca las casillas de los directores en diferentes"
+        " búsquedas; se irán acumulando automáticamente aquí)*"
     )
 
   # Botón de descarga al final de la página
+  st.divider()
   csv = df_filtrado.to_csv(index=False).encode("utf-8")
   st.download_button(
       label="📥 Descargar resultados en CSV",
