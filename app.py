@@ -171,12 +171,14 @@ try:
                   correo_val = val
                   link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo_val)}"
 
-                  # Mostramos el correo con enlace a Gmail y un cuadro limpio con botón de copia integrado usando el índice único de la fila
+                  # Mostramos el correo con enlace a Gmail y al lado un botón compacto de copia usando st.copy_to_clipboard (o st.code optimizado y compacto)
                   st.markdown(
                       f"{col}: 📧 [{correo_val}]({link_gmail_ind}) *(Abrir en"
                       " Gmail)*",
                       unsafe_allow_html=True,
                   )
+                  # Usamos un botón nativo compacto para copiar el texto limpio de manera elegante
+                  st.caption(f"Copiar dirección de correo:")
                   st.code(correo_val, language=None)
                 else:
                   st.text(f"{col}: {val}")
