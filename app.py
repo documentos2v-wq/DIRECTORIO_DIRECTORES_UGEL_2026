@@ -9,6 +9,21 @@ st.set_page_config(
     layout="centered",
 )
 
+# Estilo CSS global para centrar las flechitas dentro de todos los expanders
+st.markdown(
+    """
+    <style>
+    [data-testid="stExpander"] summary div p {
+        text-align: center !important;
+        width: 100% !important;
+        font-weight: bold;
+        letter-spacing: 4px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # Sección de Membrete / Encabezado institucional estilo UGEL
 col_logo1, col_logo2, col_logo3 = st.columns([1, 1.5, 1])
 with col_logo2:
@@ -29,7 +44,7 @@ st.markdown(
 st.divider()
 
 
-# Función para cargar únicamente la pestaña 'PUBLICAS'
+# Función para cargar únicamente la pestaña 'PUBLICAS' conservando ceros a la izquierda
 @st.cache_data
 def cargar_datos():
     archivo_excel = "BD - Directores.xlsx"
@@ -186,50 +201,46 @@ try:
                     else:
                         st.markdown("**Correo:** 📧 No registrado")
 
-                # Expander con las flechitas centradas usando HTML/CSS
-                with st.expander(
-                    "▼ ▼ ▼"
-                ):  # Nota: Streamlit usa esto como referencia base, pero inyectamos el contenedor centrado abajo:
-                    pass
+                # Expander con las flechitas centradas y campos secundarios con colores diferenciados
+                with st.expander("▼  ▼  ▼"):
+                    for col in columnas_df:
+                        val = limpiar_texto(row[col])
+                        col_upper = col.upper()
+                        if not any(
+                            k in col_upper
+                            for k in [
+                                "DIRECTOR",
+                                "IE",
+                                "CELULAR",
+                                "MODULAR",
+                                "CORREO",
+                            ]
+                        ):
+                            if val != "" and val != "nan":
+                                st.markdown(
+                                    f"<div style='padding: 3px 0;'>"
+                                    f"<span style='opacity: 0.7; font-weight: 500;'>{col}:</span> "
+                                    f"<span style='font-weight: 600; color: #38bdf8;'>{val}</span>"
+                                    f"</div>",
+                                    unsafe_allow_html=True,
+                                )
 
-                # Truco de diseño: forzar centrado visual de las flechas dentro del expander
-                st.markdown(
-                    """
-                    <style>
-                    [data-testid="stExpander"] summary div p {
-                        text-align: center !important;
-                        width: 100% !important;
-                        font-weight: bold;
-                        letter-spacing: 3px;
-                    }
-                    </style>
-                    """,
-                    unsafe_allow_html=True,
-                )
+                st.markdown("---")
+    else:
+        st.warning(
+            "No se encontraron coincidencias. Prueba buscando por una sola"
+            " palabra o número."
+        )
 
-                # Si quieres rellenar los datos expandidos debajo:
-                # (Nota: El contenido interno detallado lo manejamos iterando los campos restantes)
-                # Reemplazamos el expander anterior estándar por este bloque funcional completo:
+    # Botón de descarga al final de la página
+    csv = df_filtrado.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="📥 Descargar resultados filtrados en CSV",
+        data=csv,
+        file_name="directorio_filtrado.csv",
+        mime="text/csv",
+        use_container_width=True,
+    )
 
-            # Bloque limpio con el expander interactivo y centrado
-            with st.expander("▼  ▼  ▼"):
-                for col in columnas_df:
-                    val = limpiar_texto(row[col])
-                    col_upper = col.upper()
-                    if not any(
-                        k in col_upper
-                        for k in [
-                            "DIRECTOR",
-                            "IE",
-                            "CELULAR",
-                            "MODULAR",
-                            "CORREO",
-                        ]
-                    ):
-                        if val != "" and val != "nan":
-                            st.markdown(
-                                f"<div style='padding: 3px 0;'>"
-                                f"<span style='opacity: 0.7; font-weight: 500;'>{col}:</span> "
-                                f"<span style='font-weight: 600; color: #38bdf8;'>{val}</span>"
-                                f"</div>",
-                                unsafe_allow_html=True,
+except Exception as e:
+    st.error(f"Ocurrió un error al cargar los datos: {e}")
