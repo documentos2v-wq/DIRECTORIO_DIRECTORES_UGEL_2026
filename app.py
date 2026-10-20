@@ -9,7 +9,7 @@ st.set_page_config(
     layout="centered",
 )
 
-# Títulos adaptativos al tema del navegador (sin colores forzados que desentonen)
+# Títulos adaptativos al tema del navegador
 st.markdown(
     "<h1 style='text-align: center;'>Directorio de Directores</h1>",
     unsafe_allow_html=True,
@@ -167,7 +167,6 @@ try:
                 if correo:
                     link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo)}"
                     
-                    # Usamos columnas adaptativas (se apilan automáticamente en pantallas muy chicas)
                     col_mail1, col_mail2 = st.columns([2.5, 1])
                     with col_mail1:
                         st.markdown(
@@ -176,4 +175,46 @@ try:
                             unsafe_allow_html=True,
                         )
                     with col_mail2:
-                        if st
+                        if st.button("📋 Copiar", key=f"btn_cp_{index}_correo"):
+                            st.toast(f"¡Correo copiado: {correo}!", icon="✅")
+                else:
+                    st.markdown("**Correo:** 📧 No registrado")
+
+                st.divider()
+                st.markdown("**Otros detalles del registro:**")
+
+                # Mostrar el resto de campos secundarios ordenados
+                for col in columnas:
+                    val = limpiar_texto(row[col])
+                    col_upper = col.upper()
+                    if not any(
+                        k in col_upper
+                        for k in [
+                            "DIRECTOR",
+                            "IE",
+                            "CELULAR",
+                            "MODULAR",
+                            "CORREO",
+                        ]
+                    ):
+                        if val != "" and val != "nan":
+                            st.text(f"{col}: {val}")
+    else:
+        st.warning(
+            "No se encontraron coincidencias. Prueba buscando por una sola"
+            " palabra o número."
+        )
+
+    # Botón de descarga al final de la página adaptado al ancho de pantalla
+    st.divider()
+    csv = df_filtrado.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="📥 Descargar resultados en CSV",
+        data=csv,
+        file_name="directores_filtrados.csv",
+        mime="text/csv",
+        use_container_width=True,
+    )
+
+except Exception as e:
+    st.error(f"Ocurrió un error al cargar los datos: {e}")
