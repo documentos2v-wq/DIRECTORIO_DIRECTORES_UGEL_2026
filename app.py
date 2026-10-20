@@ -4,21 +4,30 @@ import streamlit as st
 
 # Configuración de la página web optimizada para dispositivos móviles
 st.set_page_config(
-    page_title="Directorio de Directores UGEL 2026",
+    page_title="Directorio de Directores UGEL",
     page_icon="🏫",
     layout="centered",
 )
 
-# Títulos adaptativos al tema del navegador
+# Sección de Membrete / Encabezado institucional estilo UGEL
+col_logo1, col_logo2, col_logo3 = st.columns([1, 1.5, 1])
+with col_logo2:
+    # Puedes cambiar esta URL por el enlace de tu logo oficial o dejar un icono institucional
+    st.markdown(
+        "<div style='text-align: center; font-size: 50px;'>🏛️</div>",
+        unsafe_allow_html=True,
+    )
+
 st.markdown(
-    "<h1 style='text-align: center;'>Directorio de Directores</h1>",
+    "<h2 style='text-align: center; margin-bottom: 0px;'>UGEL - DIRECTORIO</h2>",
     unsafe_allow_html=True,
 )
 st.markdown(
-    "<p style='text-align: center; opacity: 0.8;'>Busca por cualquier palabra"
-    " clave de forma rápida y ordenada.</p>",
+    "<p style='text-align: center; opacity: 0.7; font-size: 14px;'>Directorio"
+    " de Directores - 2026</p>",
     unsafe_allow_html=True,
 )
+st.divider()
 
 
 # Función para cargar únicamente la pestaña 'PUBLICAS'
@@ -56,14 +65,13 @@ try:
     df = cargar_datos()
 
     # Buscador general inteligente y flexible
-    st.markdown("### 🔍 Buscador General")
     busqueda = st.text_input(
         "",
-        placeholder="Ej: Castro, 267385, Juan, Primaria...",
+        placeholder="🔍 Buscar por nombre, IE, DNI o palabra clave...",
         label_visibility="collapsed",
     )
 
-    # Filtrado flexible por palabras (Lógica OR robusta frente a ceros iniciales y números)
+    # Filtrado flexible por palabras
     if busqueda:
         palabras = busqueda.strip().split()
 
@@ -102,17 +110,40 @@ try:
 
     total_resultados = len(df_filtrado)
 
-    # Contador de resultados con opacidad adaptativa
+    # Selector de modo de visualización estilo UGEL Otuzco
+    col_r1, col_r2 = st.columns([1, 1.5])
+    with col_r1:
+        modo_vista = st.radio(
+            "", ["Ver múltiples resultados", "Solo 1 resultado"], horizontal=True, label_visibility="collapsed"
+        )
+
+    # Contador de resultados
     st.markdown(
-        f"<p style='opacity: 0.7; font-size: 14px;'>Se encontraron"
-        f" <b>{total_resultados}</b> registros.</p>",
+        f"<p style='opacity: 0.7; font-size: 13px; text-align: center; margin-top: 5px;'><b>{total_resultados}</b> resultado(s) encontrado(s)</p>",
         unsafe_allow_html=True,
     )
-    st.divider()
+    st.markdown("---")
 
-    # Mostrar resultados de forma fluida, 100% responsiva para cualquier pantalla
     if total_resultados > 0:
-        columnas = [c for c in df_filtrado.columns]
+        # Si selecciona "Solo 1 resultado", mostramos un selector desplegable para elegir el registro exacto
+        if modo_vista == "Solo 1 resultado":
+            nombres_disponibles = []
+            for idx, row in df_filtrado.iterrows():
+                nd = obtener_campo(row, ["DIRECTOR", "NOMBRES Y APELLIDOS"])
+                ie = obtener_campo(row, ["IE", "INSTITUCION"])
+                nombres_disponibles.append(
+                    f"{nd if nd else 'Sin nombre'} — {ie}"
+                )
+
+            seleccion_unitaria = st.selectbox(
+                "Seleccione el registro a detallar:", nombres_disponibles
+            )
+            if seleccion_unitaria:
+                idx_sel = nombres_disponibles.index(seleccion_unitaria)
+                df_filtrado = df_filtrado.iloc[[idx_sel]]
+
+        # Renderizado de tarjetas con diseño estructurado de 2 columnas
+        columnas_df = [c for c in df_filtrado.columns]
 
         for index, row in df_filtrado.iterrows():
             nombre_dir = obtener_campo(
@@ -128,91 +159,92 @@ try:
             if not nombre_ie:
                 nombre_ie = "IE sin nombre"
 
-            # Título principal adaptativo para el expander
-            if celular:
-                titulo_tarjeta = (
-                    f"🏫 {nombre_ie} — 👤 {nombre_dir} — 📞 {celular}"
+            # Tarjeta con contenedor estilizado para simular el diseño de la captura
+            with st.container():
+                st.markdown(
+                    f"""
+                    <div style="
+                        border: 1px solid rgba(150, 150, 150, 0.3);
+                        border-radius: 10px;
+                        padding: 15px;
+                        margin-bottom: 20px;
+                        background-color: rgba(100, 100, 100, 0.03);
+                    ">
+                        <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px; border-bottom: 1px solid rgba(150, 150, 150, 0.2); padding-bottom: 8px;">
+                            👤 {nombre_dir.upper()}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
                 )
-            else:
-                titulo_tarjeta = (
-                    f"🏫 {nombre_ie} — 👤 {nombre_dir} — 📞 (Sin celular)"
-                )
 
-            with st.expander(titulo_tarjeta):
-                st.markdown(f"**IE:** 🏫 {nombre_ie}")
-                st.markdown(f"**Nombre Director:** 👤 {nombre_dir}")
+                # Estructura interna de 2 columnas dentro de cada tarjeta (como en el modelo)
+                c_col1, c_col2 = st.columns(2)
 
-                if celular:
-                    num_limpio = "".join(filter(str.isdigit, celular))
-                    num_whatsapp = (
-                        f"51{num_limpio}"
-                        if len(num_limpio) == 9
-                        else num_limpio
-                    )
-                    link_wa = f"https://wa.me/{num_whatsapp}"
-                    st.markdown(
-                        f"**Celular:** 📞 [{celular}]({link_wa}) 🟢 *(Clic para"
-                        " WhatsApp)*",
-                        unsafe_allow_html=True,
-                    )
-                else:
-                    st.markdown("**Celular:** 📞 No registrado")
+                with c_col1:
+                    st.markdown(f"**IE:** 🏫 {nombre_ie}")
+                    if cod_modular:
+                        st.markdown(f"**Cód. Modular:** 🔢 {cod_modular}")
+                    else:
+                        st.markdown("**Cód. Modular:** 🔢 No registrado")
 
-                if cod_modular:
-                    st.markdown(f"**Código Modular:** 🔢 {cod_modular}")
-                else:
-                    st.markdown("**Código Modular:** 🔢 No registrado")
-
-                # Correo principal y botón adaptable para móviles y PC
-                if correo:
-                    link_gmail_ind = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo)}"
-                    
-                    col_mail1, col_mail2 = st.columns([2.5, 1])
-                    with col_mail1:
+                with c_col2:
+                    if celular:
+                        num_limpio = "".join(filter(str.isdigit, celular))
+                        num_whatsapp = (
+                            f"51{num_limpio}"
+                            if len(num_limpio) == 9
+                            else num_limpio
+                        )
+                        link_wa = f"https://wa.me/{num_whatsapp}"
                         st.markdown(
-                            f"**Correo:** 📧 [{correo}]({link_gmail_ind})"
-                            " *(Abrir en Gmail)*",
+                            f"**Celular:** 📞 [{celular}]({link_wa}) 🟢",
                             unsafe_allow_html=True,
                         )
-                    with col_mail2:
-                        if st.button("📋 Copiar", key=f"btn_cp_{index}_correo"):
-                            st.toast(f"¡Correo copiado: {correo}!", icon="✅")
-                else:
-                    st.markdown("**Correo:** 📧 No registrado")
+                    else:
+                        st.markdown("**Celular:** 📞 No registrado")
 
-                st.divider()
-                st.markdown("**Otros detalles del registro:**")
+                    if correo:
+                        link_gmail = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo)}"
+                        st.markdown(
+                            f"**Correo:** 📧 [{correo}]({link_gmail})",
+                            unsafe_allow_html=True,
+                        )
+                    else:
+                        st.markdown("**Correo:** 📧 No registrado")
 
-                # Mostrar el resto de campos secundarios ordenados
-                for col in columnas:
-                    val = limpiar_texto(row[col])
-                    col_upper = col.upper()
-                    if not any(
-                        k in col_upper
-                        for k in [
-                            "DIRECTOR",
-                            "IE",
-                            "CELULAR",
-                            "MODULAR",
-                            "CORREO",
-                        ]
-                    ):
-                        if val != "" and val != "nan":
-                            st.text(f"{col}: {val}")
+                # Mostrar el resto de campos secundarios ordenados de manera compacta
+                with st.expander("Ver detalles completos y otros campos"):
+                    for col in columnas_df:
+                        val = limpiar_texto(row[col])
+                        col_upper = col.upper()
+                        if not any(
+                            k in col_upper
+                            for k in [
+                                "DIRECTOR",
+                                "IE",
+                                "CELULAR",
+                                "MODULAR",
+                                "CORREO",
+                            ]
+                        ):
+                            if val != "" and val != "nan":
+                                st.text(f"{col}: {val}")
+
+                st.markdown("---")
     else:
         st.warning(
             "No se encontraron coincidencias. Prueba buscando por una sola"
             " palabra o número."
         )
 
-    # Botón de descarga al final de la página adaptado al ancho de pantalla
-    st.divider()
+    # Botón de descarga al final de la página
     csv = df_filtrado.to_csv(index=False).encode("utf-8")
     st.download_button(
-        label="📥 Descargar resultados en CSV",
+        label="📥 Descargar resultados filtrados en CSV",
         data=csv,
-        file_name="directores_filtrados.csv",
-        mime="text/csv",
+        file_name="directorio_filtrado.csv",
+        mime="text/css",
         use_container_width=True,
     )
 
