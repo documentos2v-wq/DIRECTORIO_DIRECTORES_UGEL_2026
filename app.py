@@ -33,18 +33,20 @@ st.divider()
 @st.cache_data
 def cargar_datos():
     archivo_excel = "BD - Directores.xlsx"
-    df = pd.read_excel(archivo_excel, sheet_name="PUBLICAS")
+    # dtype=str asegura que Excel lea los códigos y números manteniendo los ceros a la izquierda
+    df = pd.read_excel(archivo_excel, sheet_name="PUBLICAS", dtype=str)
     df.columns = df.columns.str.strip()
     df = df.dropna(subset=["NOMBRE DIRECTOR", "IE"], how="all")
     return df
 
 
-# Función para eliminar el .0 de cualquier número o código
+# Función para limpiar texto conservando ceros a la izquierda y evitando eliminar .0 si es parte de texto real
 def limpiar_texto(val):
-    if pd.isna(val):
+    if pd.isna(val) or val == "nan" or val is None:
         return ""
     s = str(val).strip()
-    if s.endswith(".0"):
+    # Si pandas leyó un número entero como flotante con .0 al final, lo removemos limpiamente
+    if s.endswith(".0") and s[:-2].isdigit():
         s = s[:-2]
     return s
 
@@ -119,7 +121,6 @@ try:
     if total_resultados > 0:
         columnas_df = [c for c in df_filtrado.columns]
 
-        # Muestra todos los resultados en tarjetas ordenadas de 2 columnas
         for index, row in df_filtrado.iterrows():
             nombre_dir = obtener_campo(
                 row, ["DIRECTOR", "NOMBRES Y APELLIDOS"]
@@ -158,6 +159,7 @@ try:
                 with c_col1:
                     st.markdown(f"**IE:** 🏫 {nombre_ie}")
                     if cod_modular:
+                        # Se muestra el código tal cual (respetando ceros a la izquierda)
                         st.markdown(f"**Cód. Modular:** 🔢 {cod_modular}")
                     else:
                         st.markdown("**Cód. Modular:** 🔢 No registrado")
@@ -187,8 +189,8 @@ try:
                     else:
                         st.markdown("**Correo:** 📧 No registrado")
 
-                # Mostrar el resto de campos secundarios ordenados de manera compacta
-                with st.expander("Ver detalles completos y otros campos"):
+                # Expander con flechitas centradas llamativas y colores personalizados al desplegar
+                with st.expander("▼  ▼  ▼"):
                     for col in columnas_df:
                         val = limpiar_texto(row[col])
                         col_upper = col.upper()
@@ -203,7 +205,14 @@ try:
                             ]
                         ):
                             if val != "" and val != "nan":
-                                st.text(f"{col}: {val}")
+                                # Usamos HTML con colores diferenciados para el título y el valor después de los dos puntos
+                                st.markdown(
+                                    f"<div style='padding: 3px 0;'>"
+                                    f"<span style='opacity: 0.7; font-weight: 500;'>{col}:</span> "
+                                    f"<span style='font-weight: 600; color: #38bdf8;'>{val}</span>"
+                                    f"</div>",
+                                    unsafe_allow_html=True,
+                                )
 
                 st.markdown("---")
     else:
