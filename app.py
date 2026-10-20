@@ -9,10 +9,17 @@ st.set_page_config(
     layout="centered",
 )
 
-# Estilo CSS global para centrar perfectamente las flechitas del expander
+# Estilo CSS global: Fondo con degradado elegante, tarjetas con relieve y flechitas centradas
 st.markdown(
     """
     <style>
+    /* Fondo con degradado elegante para la aplicación */
+    .stApp {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #090d16 100%);
+        background-attachment: fixed;
+    }
+
+    /* Centrar perfectamente las flechitas del expander */
     [data-testid="stExpander"] details summary {
         display: flex;
         justify-content: center;
@@ -38,11 +45,11 @@ with col_logo2:
     )
 
 st.markdown(
-    "<h2 style='text-align: center; margin-bottom: 0px;'>UGEL - DIRECTORIO</h2>",
+    "<h2 style='text-align: center; margin-bottom: 0px; color: #f8fafc;'>UGEL - DIRECTORIO</h2>",
     unsafe_allow_html=True,
 )
 st.markdown(
-    "<p style='text-align: center; opacity: 0.7; font-size: 14px;'>Directorio"
+    "<p style='text-align: center; color: #94a3b8; font-size: 14px;'>Directorio"
     " de Directores - 2026</p>",
     unsafe_allow_html=True,
 )
@@ -59,7 +66,7 @@ def cargar_datos():
     return df
 
 
-# Función para limpiar texto y forzar los ceros iniciales en códigos modulares y DNIs
+# Función para limpiar texto y asegurar ceros iniciales
 def limpiar_texto(val, nombre_col=""):
     if pd.isna(val) or val == "nan" or val is None:
         return ""
@@ -68,11 +75,9 @@ def limpiar_texto(val, nombre_col=""):
         s = s[:-2]
     
     col_up = str(nombre_col).upper()
-    # Forzar longitud estándar de 7 dígitos para códigos modulares agregando los ceros faltantes a la izquierda
     if "MODULAR" in col_up and s.isdigit():
         if len(s) < 7:
             s = s.zfill(7)
-    # Forzar longitud estándar de 8 dígitos para DNIs si fuera necesario
     elif "DNI" in col_up and s.isdigit():
         if len(s) < 8:
             s = s.zfill(8)
@@ -142,7 +147,7 @@ try:
 
     # Contador limpio de resultados
     st.markdown(
-        f"<p style='opacity: 0.7; font-size: 13px; text-align: center; margin-top: 5px;'><b>{total_resultados}</b> resultado(s) encontrado(s)</p>",
+        f"<p style='color: #cbd5e1; font-size: 13px; text-align: center; margin-top: 5px;'><b>{total_resultados}</b> resultado(s) encontrado(s)</p>",
         unsafe_allow_html=True,
     )
     st.markdown("---")
@@ -165,17 +170,18 @@ try:
                 nombre_ie = "IE sin nombre"
 
             with st.container():
-                # Tarjeta limpia sin línea debajo del nombre
+                # Tarjeta con fondo semitransparente y efecto de brillo para resaltar sobre el fondo
                 st.markdown(
                     f"""
                     <div style="
-                        border: 1px solid rgba(150, 150, 150, 0.3);
-                        border-radius: 10px;
-                        padding: 15px;
+                        border: 1px solid rgba(56, 189, 248, 0.2);
+                        border-radius: 12px;
+                        padding: 16px;
                         margin-bottom: 20px;
-                        background-color: rgba(100, 100, 100, 0.03);
+                        background: rgba(30, 41, 59, 0.7);
+                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
                     ">
-                        <div style="font-weight: bold; font-size: 16px;">
+                        <div style="font-weight: bold; font-size: 16px; color: #f1f5f9;">
                             👤 {nombre_dir.upper()}
                         </div>
                     </div>
@@ -236,7 +242,7 @@ try:
                             if val != "" and val != "nan":
                                 st.markdown(
                                     f"<div style='padding: 3px 0;'>"
-                                    f"<span style='opacity: 0.7; font-weight: 500;'>{col}:</span> "
+                                    f"<span style='color: #94a3b8; font-weight: 500;'>{col}:</span> "
                                     f"<span style='font-weight: 600; color: #38bdf8;'>{val}</span>"
                                     f"</div>",
                                     unsafe_allow_html=True,
@@ -255,7 +261,7 @@ try:
         label="📥 Descargar resultados filtrados en CSV",
         data=csv,
         file_name="directorio_filtrado.csv",
-        mime="text/csv",
+        mime="text/css",
         use_container_width=True,
     )
 
