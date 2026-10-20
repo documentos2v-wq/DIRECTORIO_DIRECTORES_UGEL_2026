@@ -9,15 +9,20 @@ st.set_page_config(
     layout="centered",
 )
 
-# Estilo CSS global para centrar las flechitas dentro de todos los expanders
+# Estilo CSS global para centrar perfectamente las flechitas del expander
 st.markdown(
     """
     <style>
-    [data-testid="stExpander"] summary div p {
+    [data-testid="stExpander"] details summary {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    [data-testid="stExpander"] details summary p {
         text-align: center !important;
         width: 100% !important;
         font-weight: bold;
-        letter-spacing: 4px;
+        letter-spacing: 6px;
     }
     </style>
     """,
@@ -48,6 +53,7 @@ st.divider()
 @st.cache_data
 def cargar_datos():
     archivo_excel = "BD - Directores.xlsx"
+    # dtype=str evita que Excel o Pandas recorten los ceros iniciales de códigos y números
     df = pd.read_excel(archivo_excel, sheet_name="PUBLICAS", dtype=str)
     df.columns = df.columns.str.strip()
     df = df.dropna(subset=["NOMBRE DIRECTOR", "IE"], how="all")
@@ -149,6 +155,7 @@ try:
                 nombre_ie = "IE sin nombre"
 
             with st.container():
+                # Tarjeta limpia sin la línea horizontal debajo del nombre
                 st.markdown(
                     f"""
                     <div style="
@@ -158,7 +165,7 @@ try:
                         margin-bottom: 20px;
                         background-color: rgba(100, 100, 100, 0.03);
                     ">
-                        <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px; border-bottom: 1px solid rgba(150, 150, 150, 0.2); padding-bottom: 8px;">
+                        <div style="font-weight: bold; font-size: 16px;">
                             👤 {nombre_dir.upper()}
                         </div>
                     </div>
@@ -201,7 +208,7 @@ try:
                     else:
                         st.markdown("**Correo:** 📧 No registrado")
 
-                # Expander con las flechitas centradas y campos secundarios con colores diferenciados
+                # Expander con las flechitas perfectamente centradas
                 with st.expander("▼  ▼  ▼"):
                     for col in columnas_df:
                         val = limpiar_texto(row[col])
