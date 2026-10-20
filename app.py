@@ -9,7 +9,7 @@ st.set_page_config(
     layout="centered",
 )
 
-# Estilo CSS avanzado: Estilo Gob.pe en Tema Claro y Modo Oscuro elegante
+# Estilo CSS avanzado: Estilo Gob.pe en Tema Claro y Modo Oscuro elegante con botón azul oficial
 st.markdown(
     """
     <style>
@@ -52,6 +52,18 @@ st.markdown(
         h2, p, label {
             color: #111827 !important;
         }
+        /* Botón azul institucional estilo Gob.pe */
+        .stButton > button {
+            background-color: #0056b3 !important;
+            color: white !important;
+            font-weight: 600 !important;
+            border-radius: 4px !important;
+            border: none !important;
+            padding: 0.5rem 1rem !important;
+        }
+        .stButton > button:hover {
+            background-color: #003d82 !important;
+        }
     }
 
     /* ---------------------------------------------------- */
@@ -88,9 +100,16 @@ st.markdown(
             font-size: 16px;
             color: #f8fafc !important;
         }
+        .stButton > button {
+            background-color: #0284c7 !important;
+            color: white !important;
+            font-weight: 600 !important;
+            border-radius: 4px !important;
+            border: none !important;
+        }
     }
 
-    /* Estilo general para centrar las flechitas del expander */
+    /* Estilo para centrar y cambiar dinámicamente las flechitas del expander según su estado */
     [data-testid="stExpander"] details summary {
         display: flex;
         justify-content: center;
@@ -101,6 +120,21 @@ st.markdown(
         width: 100% !important;
         font-weight: bold;
         letter-spacing: 6px;
+    }
+    /* Flechas hacia abajo cuando está cerrado */
+    [data-testid="stExpander"] details:not([open]) summary p::after {
+        content: " ▼ ▼ ▼";
+    }
+    /* Flechas hacia arriba indicando "volver" cuando está abierto */
+    [data-testid="stExpander"] details[open] summary p::after {
+        content: " ▲ ▲ ▲";
+    }
+    /* Ocultar el texto estático para que solo actúe el indicador dinámico */
+    [data-testid="stExpander"] details summary p {
+        font-size: 0px !important;
+    }
+    [data-testid="stExpander"] details summary p::after {
+        font-size: 16px !important;
     }
     </style>
     """,
@@ -176,7 +210,7 @@ def obtener_campo(row, keywords):
 try:
     df = cargar_datos()
 
-    # Buscador estilo Gob.pe (Formulario con input y botón integrado al costado)
+    # Buscador estilo Gob.pe con el botón azul integrado
     with st.form(key="search_form"):
         st.markdown(
             "<p style='font-weight: 600; margin-bottom: 5px;'>🔍 ¿Qué director o institución buscas?</p>",
@@ -305,8 +339,8 @@ try:
                     else:
                         st.markdown("**Correo:** 📧 No registrado")
 
-                # Expander con las flechitas perfectamente centradas
-                with st.expander("▼  ▼  ▼"):
+                # Expander con indicador dinámico (cambia a flechas arriba al abrir para volver)
+                with st.expander("detalles"):
                     for col in columnas_df:
                         val = limpiar_texto(row[col], col)
                         col_upper = col.upper()
