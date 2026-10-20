@@ -226,4 +226,108 @@ try:
     if total_resultados > 0:
         columnas_df = [c for c in df_filtrado.columns]
 
-        for index, row in df_filtrado.
+        for index, row in df_filtrado.iterrows():
+            nombre_dir = obtener_campo(
+                row, ["DIRECTOR", "NOMBRES Y APELLIDOS"]
+            )
+            nombre_ie = obtener_campo(row, ["IE", "INSTITUCION"])
+            celular = obtener_campo(row, ["CELULAR", "TELEFONO", "MOVIL"])
+            cod_modular = obtener_campo(row, ["MODULAR", "CODIGO MODULAR"])
+            correo = obtener_campo(row, ["CORREO", "EMAIL"])
+
+            if not nombre_dir:
+                nombre_dir = "Sin nombre registrado"
+            if not nombre_ie:
+                nombre_ie = "IE sin nombre"
+
+            with st.container():
+                # Tarjeta utilizando la clase adaptable a claro/oscuro
+                st.markdown(
+                    f"""
+                    <div class="tarjeta-directorio">
+                        <div class="nombre-director">
+                            👤 {nombre_dir.upper()}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                # Estructura interna de 2 columnas dentro de cada tarjeta
+                c_col1, c_col2 = st.columns(2)
+
+                with c_col1:
+                    st.markdown(f"**IE:** 🏫 {nombre_ie}")
+                    if cod_modular:
+                        st.markdown(f"**Cód. Modular:** 🔢 {cod_modular}")
+                    else:
+                        st.markdown("**Cód. Modular:** 🔢 No registrado")
+
+                with c_col2:
+                    if celular:
+                        num_limpio = "".join(filter(str.isdigit, celular))
+                        num_whatsapp = (
+                            f"51{num_limpio}"
+                            if len(num_limpio) == 9
+                            else num_limpio
+                        )
+                        link_wa = f"https://wa.me/{num_whatsapp}"
+                        st.markdown(
+                            f"**Celular:** 📞 [{celular}]({link_wa}) 🟢",
+                            unsafe_allow_html=True,
+                        )
+                    else:
+                        st.markdown("**Celular:** 📞 No registrado")
+
+                    if correo:
+                        link_gmail = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo)}"
+                        st.markdown(
+                            f"**Correo:** 📧 [{correo}]({link_gmail})",
+                            unsafe_allow_html=True,
+                        )
+                    else:
+                        st.markdown("**Correo:** 📧 No registrado")
+
+                # Expander con las flechitas perfectamente centradas
+                with st.expander("▼  ▼  ▼"):
+                    for col in columnas_df:
+                        val = limpiar_texto(row[col], col)
+                        col_upper = col.upper()
+                        if not any(
+                            k in col_upper
+                            for k in [
+                                "DIRECTOR",
+                                "IE",
+                                "CELULAR",
+                                "MODULAR",
+                                "CORREO",
+                            ]
+                        ):
+                            if val != "" and val != "nan":
+                                st.markdown(
+                                    f"<div style='padding: 3px 0;'>"
+                                    f"<span style='font-weight: 500;'>{col}:</span> "
+                                    f"<span style='font-weight: 600; color: #0284c7;'>{val}</span>"
+                                    f"</div>",
+                                    unsafe_allow_html=True,
+                                )
+
+                st.markdown("---")
+    else:
+        st.warning(
+            "No se encontraron coincidencias. Prueba buscando por una sola"
+            " palabra o número."
+        )
+
+    # Botón de descarga al final de la página
+    csv = df_filtrado.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="📥 Descargar resultados filtrados en CSV",
+        data=csv,
+        file_name="directorio_filtrado.csv",
+        mime="text/csv",
+        use_container_width=True,
+    )
+
+except Exception as e:
+    st.error(f"Ocurrió un error al cargar los datos: {e}")
