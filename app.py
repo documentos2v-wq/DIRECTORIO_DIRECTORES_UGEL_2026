@@ -9,18 +9,18 @@ st.set_page_config(
     layout="centered",
 )
 
-# Estilo CSS avanzado para el diseño idéntico al Portal del Estado Peruano (Gob.pe)
+# Estilo CSS avanzado: Estilo Gob.pe en Tema Claro y Modo Oscuro elegante
 st.markdown(
     """
     <style>
     /* ---------------------------------------------------- */
-    /* TEMA CLARO: Estilo Oficial Gob.pe / Estado Peruano */
+    /* TEMA CLARO: Inspirado en el Portal Oficial Gob.pe */
     /* ---------------------------------------------------- */
     @media (prefers-color-scheme: light) {
         .stApp {
             background-color: #f4f5f7 !important;
         }
-        /* Franja roja superior clásica del Estado Peruano */
+        /* Franja roja superior institucional */
         .gob-header-top {
             background-color: #D91023;
             color: white;
@@ -34,10 +34,10 @@ st.markdown(
             text-align: center;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        /* Tarjetas estilo oficial limpio */
+        /* Tarjetas de directores con estilo limpio y borde izquierdo rojo */
         .tarjeta-directorio {
             border: 1px solid #dcdfe6 !important;
-            border-left: 5px solid #D91023 !important; /* Detalle institucional rojo lateral */
+            border-left: 5px solid #D91023 !important;
             border-radius: 6px;
             padding: 18px;
             margin-bottom: 20px;
@@ -176,12 +176,23 @@ def obtener_campo(row, keywords):
 try:
     df = cargar_datos()
 
-    # Buscador general inteligente y flexible
-    busqueda = st.text_input(
-        "",
-        placeholder="🔍 Buscar por nombre, IE, DNI o palabra clave...",
-        label_visibility="collapsed",
-    )
+    # Buscador estilo Gob.pe (Formulario con input y botón integrado al costado)
+    with st.form(key="search_form"):
+        st.markdown(
+            "<p style='font-weight: 600; margin-bottom: 5px;'>🔍 ¿Qué director o institución buscas?</p>",
+            unsafe_allow_html=True,
+        )
+        col_input, col_btn = st.columns([4, 1])
+        with col_input:
+            busqueda = st.text_input(
+                "",
+                placeholder="Ej: Apellido, DNI, IE 80004...",
+                label_visibility="collapsed",
+            )
+        with col_btn:
+            submit_search = st.form_submit_button(
+                "Buscar", use_container_width=True
+            )
 
     # Filtrado flexible por palabras
     if busqueda:
@@ -224,7 +235,7 @@ try:
 
     # Contador limpio de resultados
     st.markdown(
-        f"<p style='font-size: 13px; text-align: center; margin-top: 5px;'><b>{total_resultados}</b> resultado(s) encontrado(s)</p>",
+        f"<p style='font-size: 13px; text-align: center; margin-top: 10px;'><b>{total_resultados}</b> resultado(s) encontrado(s)</p>",
         unsafe_allow_html=True,
     )
     st.markdown("---")
@@ -247,7 +258,7 @@ try:
                 nombre_ie = "IE sin nombre"
 
             with st.container():
-                # Tarjeta estilizada con borde lateral rojo institucional en modo claro
+                # Tarjeta estilizada con el diseño oficial
                 st.markdown(
                     f"""
                     <div class="tarjeta-directorio">
