@@ -12,7 +12,6 @@ st.set_page_config(
 # Sección de Membrete / Encabezado institucional estilo UGEL
 col_logo1, col_logo2, col_logo3 = st.columns([1, 1.5, 1])
 with col_logo2:
-    # Puedes cambiar esta URL por el enlace de tu logo oficial o dejar un icono institucional
     st.markdown(
         "<div style='text-align: center; font-size: 50px;'>🏛️</div>",
         unsafe_allow_html=True,
@@ -110,14 +109,7 @@ try:
 
     total_resultados = len(df_filtrado)
 
-    # Selector de modo de visualización estilo UGEL Otuzco
-    col_r1, col_r2 = st.columns([1, 1.5])
-    with col_r1:
-        modo_vista = st.radio(
-            "", ["Ver múltiples resultados", "Solo 1 resultado"], horizontal=True, label_visibility="collapsed"
-        )
-
-    # Contador de resultados
+    # Contador limpio de resultados
     st.markdown(
         f"<p style='opacity: 0.7; font-size: 13px; text-align: center; margin-top: 5px;'><b>{total_resultados}</b> resultado(s) encontrado(s)</p>",
         unsafe_allow_html=True,
@@ -125,26 +117,9 @@ try:
     st.markdown("---")
 
     if total_resultados > 0:
-        # Si selecciona "Solo 1 resultado", mostramos un selector desplegable para elegir el registro exacto
-        if modo_vista == "Solo 1 resultado":
-            nombres_disponibles = []
-            for idx, row in df_filtrado.iterrows():
-                nd = obtener_campo(row, ["DIRECTOR", "NOMBRES Y APELLIDOS"])
-                ie = obtener_campo(row, ["IE", "INSTITUCION"])
-                nombres_disponibles.append(
-                    f"{nd if nd else 'Sin nombre'} — {ie}"
-                )
-
-            seleccion_unitaria = st.selectbox(
-                "Seleccione el registro a detallar:", nombres_disponibles
-            )
-            if seleccion_unitaria:
-                idx_sel = nombres_disponibles.index(seleccion_unitaria)
-                df_filtrado = df_filtrado.iloc[[idx_sel]]
-
-        # Renderizado de tarjetas con diseño estructurado de 2 columnas
         columnas_df = [c for c in df_filtrado.columns]
 
+        # Muestra todos los resultados en tarjetas ordenadas de 2 columnas
         for index, row in df_filtrado.iterrows():
             nombre_dir = obtener_campo(
                 row, ["DIRECTOR", "NOMBRES Y APELLIDOS"]
@@ -159,7 +134,6 @@ try:
             if not nombre_ie:
                 nombre_ie = "IE sin nombre"
 
-            # Tarjeta con contenedor estilizado para simular el diseño de la captura
             with st.container():
                 st.markdown(
                     f"""
@@ -178,7 +152,7 @@ try:
                     unsafe_allow_html=True,
                 )
 
-                # Estructura interna de 2 columnas dentro de cada tarjeta (como en el modelo)
+                # Estructura interna de 2 columnas dentro de cada tarjeta
                 c_col1, c_col2 = st.columns(2)
 
                 with c_col1:
@@ -244,7 +218,7 @@ try:
         label="📥 Descargar resultados filtrados en CSV",
         data=csv,
         file_name="directorio_filtrado.csv",
-        mime="text/css",
+        mime="text/csv",
         use_container_width=True,
     )
 
