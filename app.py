@@ -33,19 +33,17 @@ st.divider()
 @st.cache_data
 def cargar_datos():
     archivo_excel = "BD - Directores.xlsx"
-    # dtype=str asegura que Excel lea los códigos y números manteniendo los ceros a la izquierda
     df = pd.read_excel(archivo_excel, sheet_name="PUBLICAS", dtype=str)
     df.columns = df.columns.str.strip()
     df = df.dropna(subset=["NOMBRE DIRECTOR", "IE"], how="all")
     return df
 
 
-# Función para limpiar texto conservando ceros a la izquierda y evitando eliminar .0 si es parte de texto real
+# Función para limpiar texto conservando ceros a la izquierda
 def limpiar_texto(val):
     if pd.isna(val) or val == "nan" or val is None:
         return ""
     s = str(val).strip()
-    # Si pandas leyó un número entero como flotante con .0 al final, lo removemos limpiamente
     if s.endswith(".0") and s[:-2].isdigit():
         s = s[:-2]
     return s
@@ -159,7 +157,6 @@ try:
                 with c_col1:
                     st.markdown(f"**IE:** 🏫 {nombre_ie}")
                     if cod_modular:
-                        # Se muestra el código tal cual (respetando ceros a la izquierda)
                         st.markdown(f"**Cód. Modular:** 🔢 {cod_modular}")
                     else:
                         st.markdown("**Cód. Modular:** 🔢 No registrado")
@@ -189,47 +186,50 @@ try:
                     else:
                         st.markdown("**Correo:** 📧 No registrado")
 
-                # Expander con flechitas centradas llamativas y colores personalizados al desplegar
-                with st.expander("▼  ▼  ▼"):
-                    for col in columnas_df:
-                        val = limpiar_texto(row[col])
-                        col_upper = col.upper()
-                        if not any(
-                            k in col_upper
-                            for k in [
-                                "DIRECTOR",
-                                "IE",
-                                "CELULAR",
-                                "MODULAR",
-                                "CORREO",
-                            ]
-                        ):
-                            if val != "" and val != "nan":
-                                # Usamos HTML con colores diferenciados para el título y el valor después de los dos puntos
-                                st.markdown(
-                                    f"<div style='padding: 3px 0;'>"
-                                    f"<span style='opacity: 0.7; font-weight: 500;'>{col}:</span> "
-                                    f"<span style='font-weight: 600; color: #38bdf8;'>{val}</span>"
-                                    f"</div>",
-                                    unsafe_allow_html=True,
-                                )
+                # Expander con las flechitas centradas usando HTML/CSS
+                with st.expander(
+                    "▼ ▼ ▼"
+                ):  # Nota: Streamlit usa esto como referencia base, pero inyectamos el contenedor centrado abajo:
+                    pass
 
-                st.markdown("---")
-    else:
-        st.warning(
-            "No se encontraron coincidencias. Prueba buscando por una sola"
-            " palabra o número."
-        )
+                # Truco de diseño: forzar centrado visual de las flechas dentro del expander
+                st.markdown(
+                    """
+                    <style>
+                    [data-testid="stExpander"] summary div p {
+                        text-align: center !important;
+                        width: 100% !important;
+                        font-weight: bold;
+                        letter-spacing: 3px;
+                    }
+                    </style>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
-    # Botón de descarga al final de la página
-    csv = df_filtrado.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        label="📥 Descargar resultados filtrados en CSV",
-        data=csv,
-        file_name="directorio_filtrado.csv",
-        mime="text/csv",
-        use_container_width=True,
-    )
+                # Si quieres rellenar los datos expandidos debajo:
+                # (Nota: El contenido interno detallado lo manejamos iterando los campos restantes)
+                # Reemplazamos el expander anterior estándar por este bloque funcional completo:
 
-except Exception as e:
-    st.error(f"Ocurrió un error al cargar los datos: {e}")
+            # Bloque limpio con el expander interactivo y centrado
+            with st.expander("▼  ▼  ▼"):
+                for col in columnas_df:
+                    val = limpiar_texto(row[col])
+                    col_upper = col.upper()
+                    if not any(
+                        k in col_upper
+                        for k in [
+                            "DIRECTOR",
+                            "IE",
+                            "CELULAR",
+                            "MODULAR",
+                            "CORREO",
+                        ]
+                    ):
+                        if val != "" and val != "nan":
+                            st.markdown(
+                                f"<div style='padding: 3px 0;'>"
+                                f"<span style='opacity: 0.7; font-weight: 500;'>{col}:</span> "
+                                f"<span style='font-weight: 600; color: #38bdf8;'>{val}</span>"
+                                f"</div>",
+                                unsafe_allow_html=True,
