@@ -9,82 +9,88 @@ st.set_page_config(
     layout="centered",
 )
 
-# Estilo CSS inteligente: Cambia automáticamente entre el estilo institucional peruano (Tema Claro) y el Modo Oscuro
+# Estilo CSS avanzado para el diseño idéntico al Portal del Estado Peruano (Gob.pe)
 st.markdown(
     """
     <style>
     /* ---------------------------------------------------- */
-    /* 1. TEMA CLARO: Estilo Institucional (Portal Estado Peruano) */
+    /* TEMA CLARO: Estilo Oficial Gob.pe / Estado Peruano */
     /* ---------------------------------------------------- */
     @media (prefers-color-scheme: light) {
         .stApp {
-            background-color: #f3f4f6 !important;
+            background-color: #f4f5f7 !important;
         }
-        /* Barra superior institucional roja simulando el encabezado del estado */
-        .header-gob {
-            background-color: #DA1E28;
-            padding: 12px;
+        /* Franja roja superior clásica del Estado Peruano */
+        .gob-header-top {
+            background-color: #D91023;
             color: white;
-            text-align: center;
-            font-weight: bold;
-            font-size: 14px;
-            border-radius: 6px;
+            padding: 10px 15px;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border-radius: 4px;
             margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        /* Tarjetas estilo oficial en modo claro */
+        /* Tarjetas estilo oficial limpio */
         .tarjeta-directorio {
-            border: 1px solid #d1d5db !important;
-            border-radius: 8px;
-            padding: 16px;
+            border: 1px solid #dcdfe6 !important;
+            border-left: 5px solid #D91023 !important; /* Detalle institucional rojo lateral */
+            border-radius: 6px;
+            padding: 18px;
             margin-bottom: 20px;
             background-color: #ffffff !important;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
         .nombre-director {
-            font-weight: bold;
+            font-weight: 700;
             font-size: 16px;
-            color: #111827 !important;
+            color: #1f2937 !important;
         }
         h2, p, label {
-            color: #1f2937 !important;
+            color: #111827 !important;
         }
     }
 
     /* ---------------------------------------------------- */
-    /* 2. TEMA OSCURO: Mantiene el diseño moderno y elegante */
+    /* TEMA OSCURO: Modo oscuro elegante mantenido */
     /* ---------------------------------------------------- */
     @media (prefers-color-scheme: dark) {
         .stApp {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #090d16 100%);
             background-attachment: fixed;
         }
-        .header-gob {
+        .gob-header-top {
             background-color: #1e293b;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            padding: 12px;
+            border: 1px solid rgba(56, 189, 248, 0.3);
             color: #38bdf8;
-            text-align: center;
-            font-weight: bold;
-            font-size: 14px;
-            border-radius: 6px;
+            padding: 10px 15px;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            border-radius: 4px;
             margin-bottom: 20px;
+            text-align: center;
         }
         .tarjeta-directorio {
             border: 1px solid rgba(56, 189, 248, 0.2);
-            border-radius: 12px;
-            padding: 16px;
+            border-left: 5px solid #38bdf8 !important;
+            border-radius: 8px;
+            padding: 18px;
             margin-bottom: 20px;
-            background: rgba(30, 41, 59, 0.7);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            background: rgba(30, 41, 59, 0.85);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
         }
         .nombre-director {
-            font-weight: bold;
+            font-weight: 700;
             font-size: 16px;
-            color: #f1f5f9 !important;
+            color: #f8fafc !important;
         }
     }
 
-    /* Centrar perfectamente las flechitas del expander en ambos temas */
+    /* Estilo general para centrar las flechitas del expander */
     [data-testid="stExpander"] details summary {
         display: flex;
         justify-content: center;
@@ -103,25 +109,25 @@ st.markdown(
 
 # Franja superior institucional estilo Gob.pe
 st.markdown(
-    '<div class="header-gob">PERÚ — Plataforma Digital del Estado Peruano | UGEL Directorio</div>',
+    '<div class="gob-header-top">PERÚ — Plataforma Digital del Estado Peruano | UGEL Directorio Oficial</div>',
     unsafe_allow_html=True,
 )
 
-# Sección de Membrete / Encabezado
+# Membrete central
 col_logo1, col_logo2, col_logo3 = st.columns([1, 1.5, 1])
 with col_logo2:
     st.markdown(
-        "<div style='text-align: center; font-size: 50px;'>🏛️</div>",
+        "<div style='text-align: center; font-size: 45px;'>🏛️</div>",
         unsafe_allow_html=True,
     )
 
 st.markdown(
-    "<h2 style='text-align: center; margin-bottom: 0px;'>UGEL - DIRECTORIO</h2>",
+    "<h2 style='text-align: center; margin-bottom: 0px;'>UGEL - DIRECTORIO INSTITUCIONAL</h2>",
     unsafe_allow_html=True,
 )
 st.markdown(
     "<p style='text-align: center; opacity: 0.7; font-size: 14px;'>Directorio"
-    " de Directores - 2026</p>",
+    " Oficial de Directores - 2026</p>",
     unsafe_allow_html=True,
 )
 st.divider()
@@ -241,7 +247,7 @@ try:
                 nombre_ie = "IE sin nombre"
 
             with st.container():
-                # Tarjeta utilizando la clase adaptable a claro/oscuro
+                # Tarjeta estilizada con borde lateral rojo institucional en modo claro
                 st.markdown(
                     f"""
                     <div class="tarjeta-directorio">
