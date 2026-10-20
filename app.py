@@ -9,17 +9,82 @@ st.set_page_config(
     layout="centered",
 )
 
-# Estilo CSS global: Fondo con degradado elegante, tarjetas con relieve y flechitas centradas
+# Estilo CSS inteligente: Cambia automáticamente entre el estilo institucional peruano (Tema Claro) y el Modo Oscuro
 st.markdown(
     """
     <style>
-    /* Fondo con degradado elegante para la aplicación */
-    .stApp {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #090d16 100%);
-        background-attachment: fixed;
+    /* ---------------------------------------------------- */
+    /* 1. TEMA CLARO: Estilo Institucional (Portal Estado Peruano) */
+    /* ---------------------------------------------------- */
+    @media (prefers-color-scheme: light) {
+        .stApp {
+            background-color: #f3f4f6 !important;
+        }
+        /* Barra superior institucional roja simulando el encabezado del estado */
+        .header-gob {
+            background-color: #DA1E28;
+            padding: 12px;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        /* Tarjetas estilo oficial en modo claro */
+        .tarjeta-directorio {
+            border: 1px solid #d1d5db !important;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            background-color: #ffffff !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .nombre-director {
+            font-weight: bold;
+            font-size: 16px;
+            color: #111827 !important;
+        }
+        h2, p, label {
+            color: #1f2937 !important;
+        }
     }
 
-    /* Centrar perfectamente las flechitas del expander */
+    /* ---------------------------------------------------- */
+    /* 2. TEMA OSCURO: Mantiene el diseño moderno y elegante */
+    /* ---------------------------------------------------- */
+    @media (prefers-color-scheme: dark) {
+        .stApp {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #090d16 100%);
+            background-attachment: fixed;
+        }
+        .header-gob {
+            background-color: #1e293b;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            padding: 12px;
+            color: #38bdf8;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .tarjeta-directorio {
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            background: rgba(30, 41, 59, 0.7);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+        .nombre-director {
+            font-weight: bold;
+            font-size: 16px;
+            color: #f1f5f9 !important;
+        }
+    }
+
+    /* Centrar perfectamente las flechitas del expander en ambos temas */
     [data-testid="stExpander"] details summary {
         display: flex;
         justify-content: center;
@@ -36,7 +101,13 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Sección de Membrete / Encabezado institucional estilo UGEL
+# Franja superior institucional estilo Gob.pe
+st.markdown(
+    '<div class="header-gob">PERÚ — Plataforma Digital del Estado Peruano | UGEL Directorio</div>',
+    unsafe_allow_html=True,
+)
+
+# Sección de Membrete / Encabezado
 col_logo1, col_logo2, col_logo3 = st.columns([1, 1.5, 1])
 with col_logo2:
     st.markdown(
@@ -45,11 +116,11 @@ with col_logo2:
     )
 
 st.markdown(
-    "<h2 style='text-align: center; margin-bottom: 0px; color: #f8fafc;'>UGEL - DIRECTORIO</h2>",
+    "<h2 style='text-align: center; margin-bottom: 0px;'>UGEL - DIRECTORIO</h2>",
     unsafe_allow_html=True,
 )
 st.markdown(
-    "<p style='text-align: center; color: #94a3b8; font-size: 14px;'>Directorio"
+    "<p style='text-align: center; opacity: 0.7; font-size: 14px;'>Directorio"
     " de Directores - 2026</p>",
     unsafe_allow_html=True,
 )
@@ -73,7 +144,7 @@ def limpiar_texto(val, nombre_col=""):
     s = str(val).strip()
     if s.endswith(".0") and s[:-2].isdigit():
         s = s[:-2]
-    
+
     col_up = str(nombre_col).upper()
     if "MODULAR" in col_up and s.isdigit():
         if len(s) < 7:
@@ -81,7 +152,7 @@ def limpiar_texto(val, nombre_col=""):
     elif "DNI" in col_up and s.isdigit():
         if len(s) < 8:
             s = s.zfill(8)
-            
+
     return s
 
 
@@ -147,7 +218,7 @@ try:
 
     # Contador limpio de resultados
     st.markdown(
-        f"<p style='color: #cbd5e1; font-size: 13px; text-align: center; margin-top: 5px;'><b>{total_resultados}</b> resultado(s) encontrado(s)</p>",
+        f"<p style='font-size: 13px; text-align: center; margin-top: 5px;'><b>{total_resultados}</b> resultado(s) encontrado(s)</p>",
         unsafe_allow_html=True,
     )
     st.markdown("---")
@@ -155,115 +226,4 @@ try:
     if total_resultados > 0:
         columnas_df = [c for c in df_filtrado.columns]
 
-        for index, row in df_filtrado.iterrows():
-            nombre_dir = obtener_campo(
-                row, ["DIRECTOR", "NOMBRES Y APELLIDOS"]
-            )
-            nombre_ie = obtener_campo(row, ["IE", "INSTITUCION"])
-            celular = obtener_campo(row, ["CELULAR", "TELEFONO", "MOVIL"])
-            cod_modular = obtener_campo(row, ["MODULAR", "CODIGO MODULAR"])
-            correo = obtener_campo(row, ["CORREO", "EMAIL"])
-
-            if not nombre_dir:
-                nombre_dir = "Sin nombre registrado"
-            if not nombre_ie:
-                nombre_ie = "IE sin nombre"
-
-            with st.container():
-                # Tarjeta con fondo semitransparente y efecto de brillo para resaltar sobre el fondo
-                st.markdown(
-                    f"""
-                    <div style="
-                        border: 1px solid rgba(56, 189, 248, 0.2);
-                        border-radius: 12px;
-                        padding: 16px;
-                        margin-bottom: 20px;
-                        background: rgba(30, 41, 59, 0.7);
-                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-                    ">
-                        <div style="font-weight: bold; font-size: 16px; color: #f1f5f9;">
-                            👤 {nombre_dir.upper()}
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-                # Estructura interna de 2 columnas dentro de cada tarjeta
-                c_col1, c_col2 = st.columns(2)
-
-                with c_col1:
-                    st.markdown(f"**IE:** 🏫 {nombre_ie}")
-                    if cod_modular:
-                        st.markdown(f"**Cód. Modular:** 🔢 {cod_modular}")
-                    else:
-                        st.markdown("**Cód. Modular:** 🔢 No registrado")
-
-                with c_col2:
-                    if celular:
-                        num_limpio = "".join(filter(str.isdigit, celular))
-                        num_whatsapp = (
-                            f"51{num_limpio}"
-                            if len(num_limpio) == 9
-                            else num_limpio
-                        )
-                        link_wa = f"https://wa.me/{num_whatsapp}"
-                        st.markdown(
-                            f"**Celular:** 📞 [{celular}]({link_wa}) 🟢",
-                            unsafe_allow_html=True,
-                        )
-                    else:
-                        st.markdown("**Celular:** 📞 No registrado")
-
-                    if correo:
-                        link_gmail = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo)}"
-                        st.markdown(
-                            f"**Correo:** 📧 [{correo}]({link_gmail})",
-                            unsafe_allow_html=True,
-                        )
-                    else:
-                        st.markdown("**Correo:** 📧 No registrado")
-
-                # Expander con las flechitas perfectamente centradas
-                with st.expander("▼  ▼  ▼"):
-                    for col in columnas_df:
-                        val = limpiar_texto(row[col], col)
-                        col_upper = col.upper()
-                        if not any(
-                            k in col_upper
-                            for k in [
-                                "DIRECTOR",
-                                "IE",
-                                "CELULAR",
-                                "MODULAR",
-                                "CORREO",
-                            ]
-                        ):
-                            if val != "" and val != "nan":
-                                st.markdown(
-                                    f"<div style='padding: 3px 0;'>"
-                                    f"<span style='color: #94a3b8; font-weight: 500;'>{col}:</span> "
-                                    f"<span style='font-weight: 600; color: #38bdf8;'>{val}</span>"
-                                    f"</div>",
-                                    unsafe_allow_html=True,
-                                )
-
-                st.markdown("---")
-    else:
-        st.warning(
-            "No se encontraron coincidencias. Prueba buscando por una sola"
-            " palabra o número."
-        )
-
-    # Botón de descarga al final de la página
-    csv = df_filtrado.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        label="📥 Descargar resultados filtrados en CSV",
-        data=csv,
-        file_name="directorio_filtrado.csv",
-        mime="text/css",
-        use_container_width=True,
-    )
-
-except Exception as e:
-    st.error(f"Ocurrió un error al cargar los datos: {e}")
+        for index, row in df_filtrado.
