@@ -59,7 +59,7 @@ def cargar_datos():
     return df
 
 
-# Función para limpiar texto y recuperar ceros iniciales eliminados por Excel
+# Función para limpiar texto y forzar los ceros iniciales en códigos modulares y DNIs
 def limpiar_texto(val, nombre_col=""):
     if pd.isna(val) or val == "nan" or val is None:
         return ""
@@ -67,13 +67,16 @@ def limpiar_texto(val, nombre_col=""):
     if s.endswith(".0") and s[:-2].isdigit():
         s = s[:-2]
     
-    # Restaurar ceros iniciales perdidos por formato numérico de Excel
     col_up = str(nombre_col).upper()
-    if "MODULAR" in col_up and s.isdigit() and len(s) == 6:
-        s = s.zfill(7)
-    elif "DNI" in col_up and s.isdigit() and len(s) == 7:
-        s = s.zfill(8)
-        
+    # Forzar longitud estándar de 7 dígitos para códigos modulares agregando los ceros faltantes a la izquierda
+    if "MODULAR" in col_up and s.isdigit():
+        if len(s) < 7:
+            s = s.zfill(7)
+    # Forzar longitud estándar de 8 dígitos para DNIs si fuera necesario
+    elif "DNI" in col_up and s.isdigit():
+        if len(s) < 8:
+            s = s.zfill(8)
+            
     return s
 
 
