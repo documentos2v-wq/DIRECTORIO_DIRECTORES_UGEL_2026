@@ -49,24 +49,31 @@ st.markdown(
 st.divider()
 
 
-# Función para cargar únicamente la pestaña 'PUBLICAS' conservando ceros a la izquierda
+# Función para cargar únicamente la pestaña 'PUBLICAS'
 @st.cache_data
 def cargar_datos():
     archivo_excel = "BD - Directores.xlsx"
-    # dtype=str evita que Excel o Pandas recorten los ceros iniciales de códigos y números
     df = pd.read_excel(archivo_excel, sheet_name="PUBLICAS", dtype=str)
     df.columns = df.columns.str.strip()
     df = df.dropna(subset=["NOMBRE DIRECTOR", "IE"], how="all")
     return df
 
 
-# Función para limpiar texto conservando ceros a la izquierda
-def limpiar_texto(val):
+# Función para limpiar texto y recuperar ceros iniciales eliminados por Excel
+def limpiar_texto(val, nombre_col=""):
     if pd.isna(val) or val == "nan" or val is None:
         return ""
     s = str(val).strip()
     if s.endswith(".0") and s[:-2].isdigit():
         s = s[:-2]
+    
+    # Restaurar ceros iniciales perdidos por formato numérico de Excel
+    col_up = str(nombre_col).upper()
+    if "MODULAR" in col_up and s.isdigit() and len(s) == 6:
+        s = s.zfill(7)
+    elif "DNI" in col_up and s.isdigit() and len(s) == 7:
+        s = s.zfill(8)
+        
     return s
 
 
@@ -75,7 +82,7 @@ def obtener_campo(row, keywords):
     for col in row.index:
         col_up = str(col).upper()
         if any(k in col_up for k in keywords):
-            val = limpiar_texto(row[col])
+            val = limpiar_texto(row[col], col)
             if val != "" and val != "nan":
                 return val
     return ""
@@ -155,7 +162,7 @@ try:
                 nombre_ie = "IE sin nombre"
 
             with st.container():
-                # Tarjeta limpia sin la línea horizontal debajo del nombre
+                # Tarjeta limpia sin línea debajo del nombre
                 st.markdown(
                     f"""
                     <div style="
@@ -211,7 +218,7 @@ try:
                 # Expander con las flechitas perfectamente centradas
                 with st.expander("▼  ▼  ▼"):
                     for col in columnas_df:
-                        val = limpiar_texto(row[col])
+                        val = limpiar_texto(row[col], col)
                         col_upper = col.upper()
                         if not any(
                             k in col_upper
