@@ -4,112 +4,102 @@ import streamlit as st
 
 # Configuración de la página web optimizada para dispositivos móviles
 st.set_page_config(
-    page_title="Directorio de Directores UGEL",
+    page_title="Buscador UGEL",
     page_icon="🏫",
     layout="centered",
 )
 
-# Estilo CSS avanzado: Estilo Gob.pe en Tema Claro y Modo Oscuro elegante con botón azul oficial
+# Estilo CSS avanzado: Estilo Buscador estilo Google con soporte para Tema Claro y Oscuro
 st.markdown(
     """
     <style>
     /* ---------------------------------------------------- */
-    /* TEMA CLARO: Inspirado en el Portal Oficial Gob.pe */
+    /* ESTILOS GENERALES Y GOOGLE STYLE */
     /* ---------------------------------------------------- */
-    @media (prefers-color-scheme: light) {
-        .stApp {
-            background-color: #f4f5f7 !important;
-        }
-        /* Franja roja superior institucional */
-        .gob-header-top {
-            background-color: #D91023;
-            color: white;
-            padding: 10px 15px;
-            font-weight: 700;
-            font-size: 13px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        /* Tarjetas de directores con estilo limpio y borde izquierdo rojo */
-        .tarjeta-directorio {
-            border: 1px solid #dcdfe6 !important;
-            border-left: 5px solid #D91023 !important;
-            border-radius: 6px;
-            padding: 18px;
-            margin-bottom: 20px;
-            background-color: #ffffff !important;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-        .nombre-director {
-            font-weight: 700;
-            font-size: 16px;
-            color: #1f2937 !important;
-        }
-        h2, p, label {
-            color: #111827 !important;
-        }
-        /* Botón azul institucional estilo Gob.pe */
-        .stButton > button {
-            background-color: #0056b3 !important;
-            color: white !important;
-            font-weight: 600 !important;
-            border-radius: 4px !important;
-            border: none !important;
-            padding: 0.5rem 1rem !important;
-        }
-        .stButton > button:hover {
-            background-color: #003d82 !important;
-        }
+    .stApp {
+        background-color: #ffffff;
     }
-
-    /* ---------------------------------------------------- */
-    /* TEMA OSCURO: Modo oscuro elegante mantenido */
-    /* ---------------------------------------------------- */
+    
     @media (prefers-color-scheme: dark) {
         .stApp {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #090d16 100%);
-            background-attachment: fixed;
+            background-color: #0f172a !important;
         }
-        .gob-header-top {
-            background-color: #1e293b;
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            color: #38bdf8;
-            padding: 10px 15px;
-            font-weight: 700;
-            font-size: 13px;
-            text-transform: uppercase;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .tarjeta-directorio {
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            border-left: 5px solid #38bdf8 !important;
-            border-radius: 8px;
-            padding: 18px;
-            margin-bottom: 20px;
-            background: rgba(30, 41, 59, 0.85);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-        }
-        .nombre-director {
-            font-weight: 700;
-            font-size: 16px;
+        h2, p, label {
             color: #f8fafc !important;
-        }
-        .stButton > button {
-            background-color: #0284c7 !important;
-            color: white !important;
-            font-weight: 600 !important;
-            border-radius: 4px !important;
-            border: none !important;
         }
     }
 
-    /* Estilo para centrar y cambiar dinámicamente las flechitas del expander según su estado */
+    /* Logotipo estilo Google (UGEL de colores) */
+    .google-logo {
+        font-family: Arial, sans-serif;
+        font-size: 64px;
+        font-weight: bold;
+        text-align: center;
+        margin-top: 2rem;
+        margin-bottom: 0.5rem;
+        letter-spacing: -2px;
+    }
+    .g-u { color: #4285F4; }
+    .g-g { color: #EA4335; }
+    .g-e { color: #FBBC05; }
+    .g-l { color: #4285F4; }
+    .g-o { color: #34A853; }
+
+    /* Subtítulo institucional */
+    .subtitulo-google {
+        text-align: center;
+        font-size: 14px;
+        color: #5f6368;
+        margin-bottom: 2rem;
+    }
+
+    /* Tarjetas de directores limpias y elegantes */
+    .tarjeta-directorio {
+        border: 1px solid #dfe1e5 !important;
+        border-left: 5px solid #4285F4 !important;
+        border-radius: 8px;
+        padding: 18px;
+        margin-bottom: 20px;
+        background-color: #ffffff !important;
+        box-shadow: 0 1px 6px rgba(32, 33, 36, 0.08);
+    }
+    
+    @media (prefers-color-scheme: dark) {
+        .tarjeta-directorio {
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-left: 5px solid #4285F4 !important;
+            background: rgba(30, 41, 59, 0.85) !important;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+    }
+
+    .nombre-director {
+        font-weight: 700;
+        font-size: 16px;
+        color: #202124;
+    }
+    @media (prefers-color-scheme: dark) {
+        .nombre-director {
+            color: #f8fafc !important;
+        }
+    }
+
+    /* Botones de búsqueda estilo Google */
+    .stButton > button {
+        background-color: #f8f9fa !important;
+        color: #3c4043 !important;
+        border: 1px solid #dadce0 !important;
+        border-radius: 4px !important;
+        font-weight: 500 !important;
+        padding: 0.5rem 1rem !important;
+    }
+    .stButton > button:hover {
+        background-color: #f1f3f4 !important;
+        border-color: #bdc1c6 !important;
+        color: #202124 !important;
+    }
+
+    /* Estilo para el expander de detalles */
     [data-testid="stExpander"] details summary {
         display: flex;
         justify-content: center;
@@ -120,51 +110,33 @@ st.markdown(
         width: 100% !important;
         font-weight: bold;
         letter-spacing: 6px;
-    }
-    /* Flechas hacia abajo cuando está cerrado */
-    [data-testid="stExpander"] details:not([open]) summary p::after {
-        content: " ▼ ▼ ▼";
-    }
-    /* Flechas hacia arriba indicando "volver" cuando está abierto */
-    [data-testid="stExpander"] details[open] summary p::after {
-        content: " ▲ ▲ ▲";
-    }
-    /* Ocultar el texto estático para que solo actúe el indicador dinámico */
-    [data-testid="stExpander"] details summary p {
         font-size: 0px !important;
     }
-    [data-testid="stExpander"] details summary p::after {
-        font-size: 16px !important;
+    [data-testid="stExpander"] details:not([open]) summary p::after {
+        content: " ▼ ▼ ▼";
+        font-size: 14px !important;
+        color: #5f6368;
+    }
+    [data-testid="stExpander"] details[open] summary p::after {
+        content: " ▲ ▲ ▲";
+        font-size: 14px !important;
+        color: #5f6368;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# Franja superior institucional estilo Gob.pe
+# Logo central estilo Google: U-G-E-L
 st.markdown(
-    '<div class="gob-header-top">PERÚ — Plataforma Digital del Estado Peruano | UGEL Directorio Oficial</div>',
+    """
+    <div class="google-logo">
+        <span class="g-u">U</span><span class="g-g">G</span><span class="g-e">E</span><span class="g-l">L</span><span class="g-o">O</span>
+    </div>
+    <div class="subtitulo-google">Directorio Oficial de Directores y Planillas — 2026</div>
+    """,
     unsafe_allow_html=True,
 )
-
-# Membrete central
-col_logo1, col_logo2, col_logo3 = st.columns([1, 1.5, 1])
-with col_logo2:
-    st.markdown(
-        "<div style='text-align: center; font-size: 45px;'>🏛️</div>",
-        unsafe_allow_html=True,
-    )
-
-st.markdown(
-    "<h2 style='text-align: center; margin-bottom: 0px;'>UGEL - DIRECTORIO INSTITUCIONAL</h2>",
-    unsafe_allow_html=True,
-)
-st.markdown(
-    "<p style='text-align: center; opacity: 0.7; font-size: 14px;'>Directorio"
-    " Oficial de Directores - 2026</p>",
-    unsafe_allow_html=True,
-)
-st.divider()
 
 
 # Función para limpiar texto y asegurar ceros iniciales
@@ -193,18 +165,15 @@ def cargar_datos():
     df = pd.read_excel(archivo_excel, sheet_name="PUBLICAS", dtype=str)
     df.columns = df.columns.str.strip().str.upper()
 
-    # Buscar columnas clave de forma flexible
     col_dir = next((c for c in df.columns if "DIRECTOR" in c), None)
     col_ie = next((c for c in df.columns if "IE" in c or "INSTITUCION" in c), None)
 
     if col_dir and col_ie:
         df = df.dropna(subset=[col_dir, col_ie], how="all")
 
-    # Limpiar celdas en general para evitar problemas de visualización
     df = df.fillna("")
 
-    # PRE-CÁLCULO DE BÚSQUEDA: Creamos una columna oculta con todo el texto unificado y normalizado (sin tildes)
-    # Esto hace que la búsqueda posterior sea ultra rápida sin recorrer fila por fila con bucles lentos.
+    # Columna oculta para búsqueda ultra rápida y sin tildes
     df["_SEARCH_TEXT"] = (
         df.astype(str)
         .apply(lambda x: " ".join(x), axis=1)
@@ -217,7 +186,7 @@ def cargar_datos():
     return df
 
 
-# Función auxiliar optimizada para buscar campos de forma rápida
+# Función auxiliar para buscar campos rápidamente
 def obtener_campo(row, keywords):
     for col in row.index:
         col_up = str(col).upper()
@@ -231,25 +200,34 @@ def obtener_campo(row, keywords):
 try:
     df = cargar_datos()
 
-    # Buscador estilo Gob.pe con el botón azul integrado
+    # Buscador centralizado estilo Google
     with st.form(key="search_form"):
-        st.markdown(
-            "<p style='font-weight: 600; margin-bottom: 5px;'>🔍 ¿Qué director o institución buscas?</p>",
-            unsafe_allow_html=True,
-        )
-        col_input, col_btn = st.columns([4, 1])
-        with col_input:
+        col_espacio1, col_buscador, col_espacio2 = st.columns([0.5, 3, 0.5])
+
+        with col_buscador:
             busqueda = st.text_input(
                 "",
-                placeholder="Ej: Apellido, DNI, IE 80004...",
+                placeholder="🔍 Busca por IE, DNI, Apellido, Código Modular...",
                 label_visibility="collapsed",
             )
-        with col_btn:
-            submit_search = st.form_submit_button(
-                "Buscar", use_container_width=True
-            )
 
-    # Filtrado ultra-rápido utilizando la columna precalculada '_SEARCH_TEXT'
+            st.markdown(
+                "<div style='text-align: center; margin-top: 15px;'>",
+                unsafe_allow_html=True,
+            )
+            col_b1, col_b2 = st.columns(2)
+            with col_b1:
+                submit_search = st.form_submit_button(
+                    "Buscar en UGEL", use_container_width=True
+                )
+            with col_b2:
+                # Botón de suerte simulado que limpia o muestra aleatorio / ayuda
+                suerte = st.form_submit_button(
+                    "Voy a tener suerte", use_container_width=True
+                )
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    # Filtrado ultra-rápido
     if busqueda:
         palabras = busqueda.strip().split()
         mask = pd.Series(True, index=df.index)
@@ -272,7 +250,7 @@ try:
                         p_alternativa, na=False
                     )
 
-                mask = mask & sub_mask  # Aplica intersección estricta por palabra
+                mask = mask & sub_mask
 
         df_filtrado = df[mask]
     else:
@@ -282,13 +260,12 @@ try:
 
     # Contador limpio de resultados
     st.markdown(
-        f"<p style='font-size: 13px; text-align: center; margin-top: 10px;'><b>{total_resultados}</b> resultado(s) encontrado(s)</p>",
+        f"<p style='font-size: 13px; text-align: center; color: #5f6368; margin-top: 20px;'>Cerca de <b>{total_resultados}</b> resultado(s) encontrado(s)</p>",
         unsafe_allow_html=True,
     )
-    st.markdown("---")
+    st.markdown("<hr style='border: 0; border-top: 1px solid #dfe1e5;'>", unsafe_allow_html=True)
 
     if total_resultados > 0:
-        # Excluimos la columna interna de búsqueda de los detalles a mostrar
         columnas_df = [c for c in df_filtrado.columns if c != "_SEARCH_TEXT"]
 
         for index, row in df_filtrado.iterrows():
@@ -306,7 +283,7 @@ try:
                 nombre_ie = "IE sin nombre"
 
             with st.container():
-                # Tarjeta estilizada con el diseño oficial
+                # Tarjeta estilizada con borde izquierdo azul Google
                 st.markdown(
                     f"""
                     <div class="tarjeta-directorio">
@@ -318,7 +295,6 @@ try:
                     unsafe_allow_html=True,
                 )
 
-                # Estructura interna de 2 columnas dentro de cada tarjeta
                 c_col1, c_col2 = st.columns(2)
 
                 with c_col1:
@@ -353,7 +329,6 @@ try:
                     else:
                         st.markdown("**Correo:** 📧 No registrado")
 
-                # Expander con indicador dinámico
                 with st.expander("detalles"):
                     for col in columnas_df:
                         val = limpiar_texto(row[col], col)
@@ -372,26 +347,26 @@ try:
                                 st.markdown(
                                     f"<div style='padding: 3px 0;'>"
                                     f"<span style='font-weight: 500;'>{col}:</span> "
-                                    f"<span style='font-weight: 600; color: #0284c7;'>{val}</span>"
+                                    f"<span style='font-weight: 600; color: #1a0dab;'>{val}</span>"
                                     f"</div>",
                                     unsafe_allow_html=True,
                                 )
 
-                st.markdown("---")
+                st.markdown("<hr style='border: 0; border-top: 1px solid #f1f3f4;'>", unsafe_allow_html=True)
     else:
         st.warning(
             "No se encontraron coincidencias. Prueba buscando por una sola"
-            " palabra o número."
+            " palabra o número (ej: 80910)."
         )
 
-    # Botón de descarga al final de la página (excluyendo la columna auxiliar)
+    # Botón de descarga al final de la página
     df_export = df_filtrado.drop(columns=["_SEARCH_TEXT"], errors="ignore")
     csv = df_export.to_csv(index=False).encode("utf-8")
     st.download_button(
         label="📥 Descargar resultados filtrados en CSV",
         data=csv,
-        file_name="directorio_filtrado.csv",
-        mime="text/csv",
+        file_name="directorio_ugelo_filtrado.csv",
+        mime="text/css",
         use_container_width=True,
     )
 
