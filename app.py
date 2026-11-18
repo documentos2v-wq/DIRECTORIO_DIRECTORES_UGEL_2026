@@ -2,14 +2,14 @@ import urllib.parse
 import pandas as pd
 import streamlit as st
 
-# Configuración de la página web optimizada para dispositivos móviles
+# Configuración de la página web optimizada para dispositivos móviles y PC
 st.set_page_config(
     page_title="UGELO - Buscador",
     page_icon="🏫",
     layout="centered",
 )
 
-# Estilo CSS avanzado: Estilo Buscador estilo Google limpio
+# Estilo CSS avanzado: Responsive total para PC y Celulares
 st.markdown(
     """
     <style>
@@ -26,15 +26,16 @@ st.markdown(
         }
     }
 
-    /* Logotipo estilo Google (UGELO) */
+    /* Logotipo estilo Google (UGELO en mayúsculas forzadas y responsivo) */
     .google-logo {
         font-family: Arial, sans-serif;
-        font-size: 68px;
+        font-size: clamp(45px, 10vw, 68px);
         font-weight: bold;
         text-align: center;
-        margin-top: 3rem;
-        margin-bottom: 2rem;
+        margin-top: 2rem;
+        margin-bottom: 1.5rem;
         letter-spacing: -2px;
+        text-transform: uppercase !important;
     }
     .g-u { color: #4285F4; }
     .g-g { color: #EA4335; }
@@ -42,13 +43,20 @@ st.markdown(
     .g-l { color: #4285F4; }
     .g-o { color: #34A853; }
 
-    /* Tarjetas de directores limpias y elegantes */
+    /* Contenedor responsivo para el buscador */
+    .buscador-container {
+        width: 100%;
+        max-width: 650px;
+        margin: 0 auto;
+    }
+
+    /* Tarjetas de directores adaptables a móviles y PC */
     .tarjeta-directorio {
         border: 1px solid #dfe1e5 !important;
         border-left: 5px solid #4285F4 !important;
         border-radius: 8px;
-        padding: 18px;
-        margin-bottom: 20px;
+        padding: 16px;
+        margin-bottom: 15px;
         background-color: #ffffff !important;
         box-shadow: 0 1px 6px rgba(32, 33, 36, 0.08);
     }
@@ -101,7 +109,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Logo central estilo Google: U-G-E-L-O
+# Logo central estilo Google forzado en mayúsculas: U-G-E-L-O
 st.markdown(
     """
     <div class="google-logo">
@@ -173,8 +181,8 @@ def obtener_campo(row, keywords):
 try:
     df = cargar_datos()
 
-    # Buscador centralizado directo con Enter (sin botones)
-    col_espacio1, col_buscador, col_espacio2 = st.columns([0.5, 3, 0.5])
+    # Buscador centralizado adaptable a PC y Celular
+    _, col_buscador, _ = st.columns([0.1, 2.8, 0.1])
 
     with col_buscador:
         busqueda = st.text_input(
@@ -250,7 +258,8 @@ try:
                     unsafe_allow_html=True,
                 )
 
-                c_col1, c_col2 = st.columns(2)
+                # Columnas responsivas: se apilan automáticamente en móviles si la pantalla es estrecha
+                c_col1, c_col2 = st.columns([1, 1])
 
                 with c_col1:
                     st.markdown(f"**IE:** 🏫 {nombre_ie}")
