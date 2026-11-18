@@ -32,7 +32,7 @@ st.markdown(
         font-size: clamp(45px, 10vw, 68px);
         font-weight: bold;
         text-align: center;
-        margin-top: 2rem;
+        margin-top: 3rem;
         margin-bottom: 1.5rem;
         letter-spacing: -2px;
         text-transform: uppercase !important;
@@ -42,13 +42,6 @@ st.markdown(
     .g-e { color: #FBBC05; }
     .g-l { color: #4285F4; }
     .g-o { color: #34A853; }
-
-    /* Contenedor responsivo para el buscador */
-    .buscador-container {
-        width: 100%;
-        max-width: 650px;
-        margin: 0 auto;
-    }
 
     /* Tarjetas de directores adaptables a móviles y PC */
     .tarjeta-directorio {
@@ -191,8 +184,8 @@ try:
             label_visibility="collapsed",
         )
 
-    # Filtrado ultra-rápido al presionar Enter
-    if busqueda:
+    # Solo realizamos y mostramos resultados si el usuario ha escrito algo
+    if busqueda and busqueda.strip() != "":
         palabras = busqueda.strip().split()
         mask = pd.Series(True, index=df.index)
 
@@ -217,122 +210,124 @@ try:
                 mask = mask & sub_mask
 
         df_filtrado = df[mask]
-    else:
-        df_filtrado = df
+        total_resultados = len(df_filtrado)
 
-    total_resultados = len(df_filtrado)
-
-    # Contador limpio de resultados
-    st.markdown(
-        f"<p style='font-size: 13px; text-align: center; color: #5f6368; margin-top: 15px;'>Cerca de <b>{total_resultados}</b> resultado(s) encontrado(s)</p>",
-        unsafe_allow_html=True,
-    )
-    st.markdown("<hr style='border: 0; border-top: 1px solid #dfe1e5;'>", unsafe_allow_html=True)
-
-    if total_resultados > 0:
-        columnas_df = [c for c in df_filtrado.columns if c != "_SEARCH_TEXT"]
-
-        for index, row in df_filtrado.iterrows():
-            nombre_dir = obtener_campo(
-                row, ["DIRECTOR", "NOMBRES Y APELLIDOS"]
-            )
-            nombre_ie = obtener_campo(row, ["IE", "INSTITUCION"])
-            celular = obtener_campo(row, ["CELULAR", "TELEFONO", "MOVIL"])
-            cod_modular = obtener_campo(row, ["MODULAR", "CODIGO MODULAR"])
-            correo = obtener_campo(row, ["CORREO", "EMAIL"])
-
-            if not nombre_dir:
-                nombre_dir = "Sin nombre registrado"
-            if not nombre_ie:
-                nombre_ie = "IE sin nombre"
-
-            with st.container():
-                st.markdown(
-                    f"""
-                    <div class="tarjeta-directorio">
-                        <div class="nombre-director">
-                            👤 {nombre_dir.upper()}
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-                # Columnas responsivas: se apilan automáticamente en móviles si la pantalla es estrecha
-                c_col1, c_col2 = st.columns([1, 1])
-
-                with c_col1:
-                    st.markdown(f"**IE:** 🏫 {nombre_ie}")
-                    if cod_modular:
-                        st.markdown(f"**Cód. Modular:** 🔢 {cod_modular}")
-                    else:
-                        st.markdown("**Cód. Modular:** 🔢 No registrado")
-
-                with c_col2:
-                    if celular:
-                        num_limpio = "".join(filter(str.isdigit, celular))
-                        num_whatsapp = (
-                            f"51{num_limpio}"
-                            if len(num_limpio) == 9
-                            else num_limpio
-                        )
-                        link_wa = f"https://wa.me/{num_whatsapp}"
-                        st.markdown(
-                            f"**Celular:** 📞 [{celular}]({link_wa}) 🟢",
-                            unsafe_allow_html=True,
-                        )
-                    else:
-                        st.markdown("**Celular:** 📞 No registrado")
-
-                    if correo:
-                        link_gmail = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo)}"
-                        st.markdown(
-                            f"**Correo:** 📧 [{correo}]({link_gmail})",
-                            unsafe_allow_html=True,
-                        )
-                    else:
-                        st.markdown("**Correo:** 📧 No registrado")
-
-                with st.expander("detalles"):
-                    for col in columnas_df:
-                        val = limpiar_texto(row[col], col)
-                        col_upper = col.upper()
-                        if not any(
-                            k in col_upper
-                            for k in [
-                                "DIRECTOR",
-                                "IE",
-                                "CELULAR",
-                                "MODULAR",
-                                "CORREO",
-                            ]
-                        ):
-                            if val != "" and val != "nan":
-                                st.markdown(
-                                    f"<div style='padding: 3px 0;'>"
-                                    f"<span style='font-weight: 500;'>{col}:</span> "
-                                    f"<span style='font-weight: 600; color: #1a0dab;'>{val}</span>"
-                                    f"</div>",
-                                    unsafe_allow_html=True,
-                                )
-
-                st.markdown("<hr style='border: 0; border-top: 1px solid #f1f3f4;'>", unsafe_allow_html=True)
-    else:
-        st.warning(
-            "No se encontraron coincidencias. Prueba buscando por una sola"
-            " palabra o número (ej: 80910)."
+        # Contador limpio de resultados
+        st.markdown(
+            f"<p style='font-size: 13px; text-align: center; color: #5f6368; margin-top: 15px;'>Cerca de <b>{total_resultados}</b> resultado(s) encontrado(s)</p>",
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            "<hr style='border: 0; border-top: 1px solid #dfe1e5;'>",
+            unsafe_allow_html=True,
         )
 
-    # Botón de descarga al final de la página
-    df_export = df_filtrado.drop(columns=["_SEARCH_TEXT"], errors="ignore")
-    csv = df_export.to_csv(index=False).encode("utf-8")
-    st.download_button(
-        label="📥 Descargar resultados filtrados en CSV",
-        data=csv,
-        file_name="directorio_ugelo_filtrado.csv",
-        mime="text/csv",
-        use_container_width=True,
-    )
+        if total_resultados > 0:
+            columnas_df = [c for c in df_filtrado.columns if c != "_SEARCH_TEXT"]
+
+            for index, row in df_filtrado.iterrows():
+                nombre_dir = obtener_campo(
+                    row, ["DIRECTOR", "NOMBRES Y APELLIDOS"]
+                )
+                nombre_ie = obtener_campo(row, ["IE", "INSTITUCION"])
+                celular = obtener_campo(row, ["CELULAR", "TELEFONO", "MOVIL"])
+                cod_modular = obtener_campo(row, ["MODULAR", "CODIGO MODULAR"])
+                correo = obtener_campo(row, ["CORREO", "EMAIL"])
+
+                if not nombre_dir:
+                    nombre_dir = "Sin nombre registrado"
+                if not nombre_ie:
+                    nombre_ie = "IE sin nombre"
+
+                with st.container():
+                    st.markdown(
+                        f"""
+                        <div class="tarjeta-directorio">
+                            <div class="nombre-director">
+                                👤 {nombre_dir.upper()}
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                    c_col1, c_col2 = st.columns([1, 1])
+
+                    with c_col1:
+                        st.markdown(f"**IE:** 🏫 {nombre_ie}")
+                        if cod_modular:
+                            st.markdown(f"**Cód. Modular:** 🔢 {cod_modular}")
+                        else:
+                            st.markdown("**Cód. Modular:** 🔢 No registrado")
+
+                    with c_col2:
+                        if celular:
+                            num_limpio = "".join(filter(str.isdigit, celular))
+                            num_whatsapp = (
+                                f"51{num_limpio}"
+                                if len(num_limpio) == 9
+                                else num_limpio
+                            )
+                            link_wa = f"https://wa.me/{num_whatsapp}"
+                            st.markdown(
+                                f"**Celular:** 📞 [{celular}]({link_wa}) 🟢",
+                                unsafe_allow_html=True,
+                            )
+                        else:
+                            st.markdown("**Celular:** 📞 No registrado")
+
+                        if correo:
+                            link_gmail = f"https://mail.google.com/mail/?view=cm&fs=1&to={urllib.parse.quote(correo)}"
+                            st.markdown(
+                                f"**Correo:** 📧 [{correo}]({link_gmail})",
+                                unsafe_allow_html=True,
+                            )
+                        else:
+                            st.markdown("**Correo:** 📧 No registrado")
+
+                    with st.expander("detalles"):
+                        for col in columnas_df:
+                            val = limpiar_texto(row[col], col)
+                            col_upper = col.upper()
+                            if not any(
+                                k in col_upper
+                                for k in [
+                                    "DIRECTOR",
+                                    "IE",
+                                    "CELULAR",
+                                    "MODULAR",
+                                    "CORREO",
+                                ]
+                            ):
+                                if val != "" and val != "nan":
+                                    st.markdown(
+                                        f"<div style='padding: 3px 0;'>"
+                                        f"<span style='font-weight: 500;'>{col}:</span> "
+                                        f"<span style='font-weight: 600; color: #1a0dab;'>{val}</span>"
+                                        f"</div>",
+                                        unsafe_allow_html=True,
+                                    )
+
+                    st.markdown(
+                        "<hr style='border: 0; border-top: 1px solid #f1f3f4;'>",
+                        unsafe_allow_html=True,
+                    )
+        else:
+            st.warning(
+                "No se encontraron coincidencias. Prueba buscando por una sola"
+                " palabra o número (ej: 80910)."
+            )
+
+        # Botón de descarga al final de la página (solo visible al buscar)
+        df_export = df_filtrado.drop(columns=["_SEARCH_TEXT"], errors="ignore")
+        csv = df_export.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label="📥 Descargar resultados filtrados en CSV",
+            data=csv,
+            file_name="directorio_ugelo_filtrado.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
 
 except Exception as e:
     st.error(f"Ocurrió un error al cargar los datos: {e}")
