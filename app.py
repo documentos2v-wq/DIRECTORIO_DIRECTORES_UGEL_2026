@@ -167,16 +167,6 @@ st.markdown(
 st.divider()
 
 
-# Función para cargar únicamente la pestaña 'PUBLICAS'
-@st.cache_data
-def cargar_datos():
-    archivo_excel = "BD - Directores.xlsx"
-    df = pd.read_excel(archivo_excel, sheet_name="PUBLICAS", dtype=str)
-    df.columns = df.columns.str.strip()
-    df = df.dropna(subset=["NOMBRE DIRECTOR", "IE"], how="all")
-    return df
-
-
 # Función para limpiar texto y asegurar ceros iniciales
 def limpiar_texto(val, nombre_col=""):
     if pd.isna(val) or val == "nan" or val is None:
@@ -196,7 +186,38 @@ def limpiar_texto(val, nombre_col=""):
     return s
 
 
-# Función auxiliar para buscar un valor buscando por palabras clave en las columnas
+# Función optimizada para cargar datos y precalcular columna de texto de búsqueda
+@st.cache_data
+def cargar_datos():
+    archivo_excel = "BD - Directores.xlsx"
+    df = pd.read_excel(archivo_excel, sheet_name="PUBLICAS", dtype=str)
+    df.columns = df.columns.str.strip().str.upper()
+
+    # Buscar columnas clave de forma flexible
+    col_dir = next((c for c in df.columns if "DIRECTOR" in c), None)
+    col_ie = next((c for c in df.columns if "IE" in c or "INSTITUCION" in c), None)
+
+    if col_dir and col_ie:
+        df = df.dropna(subset=[col_dir, col_ie], how="all")
+
+    # Limpiar celdas en general para evitar problemas de visualización
+    df = df.fillna("")
+
+    # PRE-CÁLCULO DE BÚSQUEDA: Creamos una columna oculta con todo el texto unificado y normalizado (sin tildes)
+    # Esto hace que la búsqueda posterior sea ultra rápida sin recorrer fila por fila con bucles lentos.
+    df["_SEARCH_TEXT"] = (
+        df.astype(str)
+        .apply(lambda x: " ".join(x), axis=1)
+        .str.lower()
+        .str.normalize("NFKD")
+        .str.encode("ascii", errors="ignore")
+        .str.decode("utf-8")
+    )
+
+    return df
+
+
+# Función auxiliar optimizada para buscar campos de forma rápida
 def obtener_campo(row, keywords):
     for col in row.index:
         col_up = str(col).upper()
@@ -228,21 +249,11 @@ try:
                 "Buscar", use_container_width=True
             )
 
-    # Filtrado flexible por palabras
+    # Filtrado ultra-rápido utilizando la columna precalculada '_SEARCH_TEXT'
     if busqueda:
         palabras = busqueda.strip().split()
+        mask = pd.Series(True, index=df.index)
 
-        df_texto = (
-            df.fillna("")
-            .astype(str)
-            .apply(lambda x: " ".join(x), axis=1)
-            .str.lower()
-            .str.normalize("NFKD")
-            .str.encode("ascii", errors="ignore")
-            .str.decode("utf-8")
-        )
-
-        mask = pd.Series(False, index=df.index)
         for palabra in palabras:
             p_limpia = (
                 palabra.lower()
@@ -255,11 +266,13 @@ try:
                     p_limpia.lstrip("0") if p_limpia.isdigit() else p_limpia
                 )
 
-                mask = mask | df_texto.str.contains(p_limpia, na=False)
+                sub_mask = df["_SEARCH_TEXT"].str.contains(p_limpia, na=False)
                 if p_alternativa and p_alternativa != p_limpia:
-                    mask = mask | df_texto.str.contains(
+                    sub_mask = sub_mask | df["_SEARCH_TEXT"].str.contains(
                         p_alternativa, na=False
                     )
+
+                mask = mask & sub_mask  # Aplica intersección estricta por palabra
 
         df_filtrado = df[mask]
     else:
@@ -275,7 +288,8 @@ try:
     st.markdown("---")
 
     if total_resultados > 0:
-        columnas_df = [c for c in df_filtrado.columns]
+        # Excluimos la columna interna de búsqueda de los detalles a mostrar
+        columnas_df = [c for c in df_filtrado.columns if c != "_SEARCH_TEXT"]
 
         for index, row in df_filtrado.iterrows():
             nombre_dir = obtener_campo(
@@ -339,7 +353,7 @@ try:
                     else:
                         st.markdown("**Correo:** 📧 No registrado")
 
-                # Expander con indicador dinámico (cambia a flechas arriba al abrir para volver)
+                # Expander con indicador dinámico
                 with st.expander("detalles"):
                     for col in columnas_df:
                         val = limpiar_texto(row[col], col)
@@ -370,8 +384,9 @@ try:
             " palabra o número."
         )
 
-    # Botón de descarga al final de la página
-    csv = df_filtrado.to_csv(index=False).encode("utf-8")
+    # Botón de descarga al final de la página (excluyendo la columna auxiliar)
+    df_export = df_filtrado.drop(columns=["_SEARCH_TEXT"], errors="ignore")
+    csv = df_export.to_csv(index=False).encode("utf-8")
     st.download_button(
         label="📥 Descargar resultados filtrados en CSV",
         data=csv,
