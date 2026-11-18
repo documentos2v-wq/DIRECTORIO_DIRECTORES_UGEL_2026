@@ -4,18 +4,15 @@ import streamlit as st
 
 # Configuración de la página web optimizada para dispositivos móviles
 st.set_page_config(
-    page_title="Buscador UGEL",
+    page_title="UGELO - Buscador",
     page_icon="🏫",
     layout="centered",
 )
 
-# Estilo CSS avanzado: Estilo Buscador estilo Google con soporte para Tema Claro y Oscuro
+# Estilo CSS avanzado: Estilo Buscador estilo Google limpio
 st.markdown(
     """
     <style>
-    /* ---------------------------------------------------- */
-    /* ESTILOS GENERALES Y GOOGLE STYLE */
-    /* ---------------------------------------------------- */
     .stApp {
         background-color: #ffffff;
     }
@@ -29,14 +26,14 @@ st.markdown(
         }
     }
 
-    /* Logotipo estilo Google (UGEL de colores) */
+    /* Logotipo estilo Google (UGELO) */
     .google-logo {
         font-family: Arial, sans-serif;
-        font-size: 64px;
+        font-size: 68px;
         font-weight: bold;
         text-align: center;
-        margin-top: 2rem;
-        margin-bottom: 0.5rem;
+        margin-top: 3rem;
+        margin-bottom: 2rem;
         letter-spacing: -2px;
     }
     .g-u { color: #4285F4; }
@@ -44,14 +41,6 @@ st.markdown(
     .g-e { color: #FBBC05; }
     .g-l { color: #4285F4; }
     .g-o { color: #34A853; }
-
-    /* Subtítulo institucional */
-    .subtitulo-google {
-        text-align: center;
-        font-size: 14px;
-        color: #5f6368;
-        margin-bottom: 2rem;
-    }
 
     /* Tarjetas de directores limpias y elegantes */
     .tarjeta-directorio {
@@ -84,21 +73,6 @@ st.markdown(
         }
     }
 
-    /* Botones de búsqueda estilo Google */
-    .stButton > button {
-        background-color: #f8f9fa !important;
-        color: #3c4043 !important;
-        border: 1px solid #dadce0 !important;
-        border-radius: 4px !important;
-        font-weight: 500 !important;
-        padding: 0.5rem 1rem !important;
-    }
-    .stButton > button:hover {
-        background-color: #f1f3f4 !important;
-        border-color: #bdc1c6 !important;
-        color: #202124 !important;
-    }
-
     /* Estilo para el expander de detalles */
     [data-testid="stExpander"] details summary {
         display: flex;
@@ -127,13 +101,12 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Logo central estilo Google: U-G-E-L
+# Logo central estilo Google: U-G-E-L-O
 st.markdown(
     """
     <div class="google-logo">
         <span class="g-u">U</span><span class="g-g">G</span><span class="g-e">E</span><span class="g-l">L</span><span class="g-o">O</span>
     </div>
-    <div class="subtitulo-google">Directorio Oficial de Directores y Planillas — 2026</div>
     """,
     unsafe_allow_html=True,
 )
@@ -200,34 +173,17 @@ def obtener_campo(row, keywords):
 try:
     df = cargar_datos()
 
-    # Buscador centralizado estilo Google
-    with st.form(key="search_form"):
-        col_espacio1, col_buscador, col_espacio2 = st.columns([0.5, 3, 0.5])
+    # Buscador centralizado directo con Enter (sin botones)
+    col_espacio1, col_buscador, col_espacio2 = st.columns([0.5, 3, 0.5])
 
-        with col_buscador:
-            busqueda = st.text_input(
-                "",
-                placeholder="🔍 Busca por IE, DNI, Apellido, Código Modular...",
-                label_visibility="collapsed",
-            )
+    with col_buscador:
+        busqueda = st.text_input(
+            "",
+            placeholder="🔍 Busca por IE, DNI, Apellido, Código Modular...",
+            label_visibility="collapsed",
+        )
 
-            st.markdown(
-                "<div style='text-align: center; margin-top: 15px;'>",
-                unsafe_allow_html=True,
-            )
-            col_b1, col_b2 = st.columns(2)
-            with col_b1:
-                submit_search = st.form_submit_button(
-                    "Buscar en UGEL", use_container_width=True
-                )
-            with col_b2:
-                # Botón de suerte simulado que limpia o muestra aleatorio / ayuda
-                suerte = st.form_submit_button(
-                    "Voy a tener suerte", use_container_width=True
-                )
-            st.markdown("</div>", unsafe_allow_html=True)
-
-    # Filtrado ultra-rápido
+    # Filtrado ultra-rápido al presionar Enter
     if busqueda:
         palabras = busqueda.strip().split()
         mask = pd.Series(True, index=df.index)
@@ -260,7 +216,7 @@ try:
 
     # Contador limpio de resultados
     st.markdown(
-        f"<p style='font-size: 13px; text-align: center; color: #5f6368; margin-top: 20px;'>Cerca de <b>{total_resultados}</b> resultado(s) encontrado(s)</p>",
+        f"<p style='font-size: 13px; text-align: center; color: #5f6368; margin-top: 15px;'>Cerca de <b>{total_resultados}</b> resultado(s) encontrado(s)</p>",
         unsafe_allow_html=True,
     )
     st.markdown("<hr style='border: 0; border-top: 1px solid #dfe1e5;'>", unsafe_allow_html=True)
@@ -283,7 +239,6 @@ try:
                 nombre_ie = "IE sin nombre"
 
             with st.container():
-                # Tarjeta estilizada con borde izquierdo azul Google
                 st.markdown(
                     f"""
                     <div class="tarjeta-directorio">
@@ -366,7 +321,7 @@ try:
         label="📥 Descargar resultados filtrados en CSV",
         data=csv,
         file_name="directorio_ugelo_filtrado.csv",
-        mime="text/css",
+        mime="text/csv",
         use_container_width=True,
     )
 
